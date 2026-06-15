@@ -13,8 +13,8 @@
     "android": {
       "package": "com.adham.swipeiq",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#121212"
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundColor": "#0A0A0F"
       }
     },
     "web": {
