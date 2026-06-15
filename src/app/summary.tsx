@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getRankTier, getTierColor } from '../lib/ranks';
 import { useStore } from '../lib/store';
@@ -46,6 +46,20 @@ export default function SummaryScreen() {
   const bossColor = isRoastMode ? '#ef4444' : '#f59e0b';
   const bossTitle = isRoastMode ? 'BARELY SURVIVED...' : 'BOSS DEFEATED!';
 
+  const handleShare = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      const headline = isBossMode
+        ? `I survived the Boss Arena with ${accuracy}% accuracy on SwipeIQ! 💀⚡`
+        : `I just scored ${accuracy}% and reached ${endTier} rank on SwipeIQ! 🧠⚡`;
+      await Share.share({
+        message: `${headline}\n\nStudy smarter with AI flashcards. #SwipeIQ`,
+      });
+    } catch {
+      // User dismissed the share sheet — nothing to do.
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {showSpecialScreen ? (
@@ -82,6 +96,9 @@ export default function SummaryScreen() {
               <View style={styles.detailRow}><Text style={styles.detailLabel}>Needs Work:</Text><Text style={[styles.detailValue, { color: '#ef4444' }]}>{totalCards - rightSwipes}</Text></View>
             </View>
           </View>
+          <TouchableOpacity style={styles.shareButton} activeOpacity={0.8} onPress={handleShare}>
+            <Text style={styles.shareButtonText}>📤  Share Result</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.homeButton} activeOpacity={0.8} onPress={() => router.replace('/')}><Text style={styles.homeButtonText}>Return to Dashboard</Text></TouchableOpacity>
         </>
       )}
@@ -102,6 +119,8 @@ const styles = StyleSheet.create({
   detailValue: { color: '#fff', fontSize: 16, fontWeight: '600' },
   homeButton: { backgroundColor: '#ffffff', margin: 20, padding: 20, borderRadius: 12, alignItems: 'center' },
   homeButtonText: { color: '#000', fontSize: 16, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+  shareButton: { marginHorizontal: 20, marginTop: 20, paddingVertical: 18, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#333' },
+  shareButtonText: { color: '#fff', fontSize: 15, fontWeight: '700', letterSpacing: 1 },
   specialContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#090909', padding: 20 },
   specialHeader: { color: '#fff', fontSize: 42, fontWeight: '900', marginBottom: 40, textAlign: 'center' },
   tierBadge: { padding: 20, borderRadius: 20, borderWidth: 4, marginBottom: 30 },

@@ -35,6 +35,7 @@ function getSyncableState(): SyncableState {
     isHapticsEnabled: s.isHapticsEnabled,
     isAudioEnabled: s.isAudioEnabled,
     isDarkMode: s.isDarkMode,
+    isRemindersEnabled: s.isRemindersEnabled,
     dailySwipes: s.dailySwipes,
     lastSwipeDate: s.lastSwipeDate,
   };

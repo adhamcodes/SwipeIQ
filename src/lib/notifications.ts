@@ -15,6 +15,23 @@ export async function requestPermissions() {
   return status === 'granted';
 }
 
+export async function cancelAllReminders() {
+  await Notifications.cancelAllScheduledNotificationsAsync();
+}
+
+// Turn the daily reminder on (asks permission if needed) or off.
+// Returns true if reminders are now active.
+export async function setRemindersEnabled(enabled: boolean): Promise<boolean> {
+  if (!enabled) {
+    await cancelAllReminders();
+    return false;
+  }
+  const granted = await requestPermissions();
+  if (!granted) return false;
+  await scheduleDailyReminder();
+  return true;
+}
+
 export async function scheduleDailyReminder() {
   await Notifications.cancelAllScheduledNotificationsAsync();
   await Notifications.scheduleNotificationAsync({

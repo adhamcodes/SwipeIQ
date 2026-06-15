@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Dimensions, Easing, SafeAreaView, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { setRemindersEnabled } from '../lib/notifications';
 import { getThemeColors, useStore } from '../lib/store';
 import { supabase } from '../lib/supabase';
 
@@ -15,8 +16,8 @@ export default function DashboardScreen() {
   
   const { 
     savedDecks, streak, xp, accentColor, 
-    isRoastMode, isHapticsEnabled, isAudioEnabled, isDarkMode, 
-    setSetting, wipeVault, dailySwipes, getPriorityDeck
+    isRoastMode, isHapticsEnabled, isAudioEnabled, isDarkMode, isRemindersEnabled,
+    setSetting, wipeVault, dailySwipes, getPriorityDeck, getDueCount
   } = useStore();
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,8 +26,17 @@ export default function DashboardScreen() {
 
   // --- INTELLIGENCE GATHERING ---
   const priorityDeck = getPriorityDeck();
+  const dueCount = getDueCount();
   const bountyProgress = Math.min(dailySwipes / DAILY_BOUNTY_TARGET, 1);
   const isBountyComplete = dailySwipes >= DAILY_BOUNTY_TARGET;
+
+  // On first load, (re)schedule the daily reminder if the user wants it.
+  useEffect(() => {
+    if (isRemindersEnabled) {
+      setRemindersEnabled(true).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // METRICS MATH
   const totalDecks = savedDecks.length;
@@ -86,6 +96,20 @@ export default function DashboardScreen() {
     setSetting('accentColor', hex);
   };
 
+  const toggleReminders = async (val: boolean) => {
+    triggerHaptic();
+    setSetting('isRemindersEnabled', val);
+    const active = await setRemindersEnabled(val);
+    if (val && !active) {
+      // Permission was denied at the OS level — reflect that back in the UI.
+      setSetting('isRemindersEnabled', false);
+      Alert.alert(
+        'Reminders Blocked',
+        'To get daily reminders, please allow notifications for SwipeIQ in your phone settings.'
+      );
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
       
@@ -114,6 +138,25 @@ export default function DashboardScreen() {
             "{coachMessage}"
           </Text>
         </View>
+
+        {/* DUE TODAY CTA */}
+        {dueCount > 0 && (
+          <TouchableOpacity
+            style={[styles.dueCard, { backgroundColor: theme.accent, shadowColor: theme.accent }]}
+            onPress={() => { triggerHaptic(); router.push('/review'); }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+              <Ionicons name="time" size={28} color={theme.invertText} style={{ marginRight: 14 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.dueTitle, { color: theme.invertText }]}>
+                  {dueCount} {dueCount === 1 ? 'card' : 'cards'} due for review
+                </Text>
+                <Text style={[styles.dueSubtitle, { color: theme.invertText }]}>Tap to start your daily review</Text>
+              </View>
+            </View>
+            <Ionicons name="arrow-forward-circle" size={32} color={theme.invertText} />
+          </TouchableOpacity>
+        )}
 
         {/* DAILY BOUNTY WIDGET */}
         <View style={[styles.bountyCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
@@ -298,6 +341,15 @@ export default function DashboardScreen() {
                 </View>
                 <Switch value={isAudioEnabled} onValueChange={(val) => { setSetting('isAudioEnabled', val); triggerHaptic(); }} trackColor={{ false: '#D4D4D8', true: 'rgba(128,128,128,0.3)' }} thumbColor={isAudioEnabled ? theme.accent : '#888'} />
               </View>
+              <View style={[styles.divider, { backgroundColor: theme.panelBorder }]} />
+
+              <View style={styles.settingRow}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name={isRemindersEnabled ? "notifications" : "notifications-off"} size={20} color={isRemindersEnabled ? theme.accent : "#888"} style={{ marginRight: 15 }} />
+                  <View><Text style={[styles.settingTitle, { color: theme.text }]}>Daily Reminders</Text><Text style={[styles.settingDesc, { color: theme.subText }]}>Keep your streak alive</Text></View>
+                </View>
+                <Switch value={isRemindersEnabled} onValueChange={toggleReminders} trackColor={{ false: '#D4D4D8', true: 'rgba(128,128,128,0.3)' }} thumbColor={isRemindersEnabled ? theme.accent : '#888'} />
+              </View>
             </View>
 
             <Text style={[styles.panelSectionTitle, { color: theme.danger, marginTop: 10 }]}>DANGER ZONE</Text>
@@ -333,8 +385,11 @@ const styles = StyleSheet.create({
   coachTitle: { fontSize: 10, fontWeight: '900', letterSpacing: 2, marginBottom: 8 },
   coachMessage: { fontSize: 22, fontWeight: 'bold', lineHeight: 32 },
 
-  bountyCard: { borderRadius: 16, padding: 20, borderWidth: 1, marginBottom: 30, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
-  bountyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  dueCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 18, borderRadius: 16, marginBottom: 24, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 14, elevation: 8 },
+  dueTitle: { fontSize: 16, fontWeight: '900', marginBottom: 2 },
+  dueSubtitle: { fontSize: 12, fontWeight: '600', opacity: 0.85 },
+
+  bountyCard: { borderRadius: 16, padding: 20, borderWidth: 1, marginBottom: 30, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },  bountyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   bountyTitle: { fontSize: 16, fontWeight: 'bold' },
   bountyReward: { fontSize: 14, fontWeight: '900' },
   bountyDesc: { fontSize: 13, marginBottom: 16 },
