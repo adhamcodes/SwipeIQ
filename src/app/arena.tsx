@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, PanResponder, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { applySM2, QUALITY_FAILURE, QUALITY_SUCCESS } from '../lib/sm2';
+import { xpForRepetition } from '../lib/deck-utils';
 import { Flashcard, getThemeColors, useStore } from '../lib/store';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -156,7 +157,7 @@ export default function ArenaScreen() {
     );
 
     if (quality === 'MASTERED') {
-      addXP(10);
+      addXP(xpForRepetition(card.repetition));
       setComboCount(comboCount + 1);
       rightRef.current += 1;
     } else {
@@ -226,7 +227,7 @@ export default function ArenaScreen() {
             <Text style={[styles.text, { color: theme.text }]}>{showAnswer ? currentCard.answer : currentCard.question}</Text>
           </ScrollView>
           <View style={styles.footerHints}>
-            {!showAnswer ? <Text style={[styles.hint, { color: theme.subText }]}>Tap to reveal</Text> : <Text style={[styles.swipeHint, { color: theme.accent }]}>Swipe Left to Re-learn • Swipe Right if Mastered (+10 XP)</Text>}
+            {!showAnswer ? <Text style={[styles.hint, { color: theme.subText }]}>Tap to reveal</Text> : <Text style={[styles.swipeHint, { color: theme.accent }]}>Swipe Left to Re-learn • Swipe Right if Mastered</Text>}
           </View>
         </Animated.View>
       </View>

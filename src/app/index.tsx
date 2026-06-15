@@ -6,6 +6,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Dimensions, Easing, SafeAreaView, ScrollView, StatusBar, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { setRemindersEnabled } from '../lib/notifications';
 import { getThemeColors, useStore } from '../lib/store';
+import { getRankProgress } from '../lib/ranks';
 import { supabase } from '../lib/supabase';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -56,14 +57,8 @@ export default function DashboardScreen() {
   const masteredCards = savedDecks.reduce((acc, deck) => acc + deck.cards.filter(c => c.repetition > 0).length, 0);
   const masteryPercent = totalCards === 0 ? 0 : Math.round((masteredCards / totalCards) * 100);
 
-  // RANK & XP MATH
-  let rank = "Novice";
-  let xpProgress = 0;
-  let nextTarget = 100;
-  if (xp < 100) { rank = "Novice"; nextTarget = 100; xpProgress = xp / 100; }
-  else if (xp < 500) { rank = "Scholar"; nextTarget = 500; xpProgress = (xp - 100) / 400; }
-  else if (xp < 1500) { rank = "Adept"; nextTarget = 1500; xpProgress = (xp - 500) / 1000; }
-  else { rank = "Master"; nextTarget = xp; xpProgress = 1; }
+  // RANK & XP MATH (unified with the summary screen's tier system)
+  const { tier: rank, nextTarget, progress: xpProgress } = getRankProgress(xp);
 
   // --- COACH TOAST LOGIC ---
   const coachMessage = isRoastMode
