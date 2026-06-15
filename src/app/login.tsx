@@ -74,6 +74,22 @@ export default function LoginScreen() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    const cleanEmail = email.trim();
+    if (!cleanEmail) {
+      Alert.alert('Enter your email first', 'Type your email in the field above, then tap "Forgot password".');
+      return;
+    }
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail);
+      if (error) throw error;
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert('Check your inbox 📧', `We sent a password reset link to ${cleanEmail}.`);
+    } catch (e: any) {
+      Alert.alert('Could not send reset link', e.message);
+    }
+  };
+
   const fieldStyle = (name: string) => [
     styles.inputWrap,
     { borderColor: focused === name ? ACCENT : IDLE_BORDER, shadowOpacity: focused === name ? 0.5 : 0 },
@@ -162,6 +178,12 @@ export default function LoginScreen() {
           </View>
         </View>
 
+        {!isSignUp && (
+          <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotWrap}>
+            <Text style={styles.forgotText}>Forgot password?</Text>
+          </TouchableOpacity>
+        )}
+
         {/* PRIMARY ACTION */}
         <TouchableOpacity onPress={handleAuthentication} disabled={loading} activeOpacity={0.85} style={styles.authShadow}>
           <LinearGradient colors={['#00E5FF', '#0066FF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.authButton}>
@@ -213,4 +235,6 @@ const styles = StyleSheet.create({
   authButtonText: { color: '#00121A', fontSize: 15, fontWeight: '900', letterSpacing: 2 },
 
   secureNote: { color: '#555', fontSize: 11, textAlign: 'center', marginTop: 24, fontWeight: '600' },
+  forgotWrap: { alignSelf: 'flex-end', marginTop: -4, marginBottom: 18, paddingVertical: 4 },
+  forgotText: { color: '#888', fontSize: 13, fontWeight: '600' },
 });
