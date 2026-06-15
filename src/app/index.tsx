@@ -124,18 +124,24 @@ export default function DashboardScreen() {
       
       {/* HEADER */}
       <View style={styles.header}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={[styles.rankBadge, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
-            <Text style={[styles.rankText, { color: theme.text }]} numberOfLines={1}>{displayName}</Text>
+        <View style={styles.headerLeft}>
+          <View style={[styles.headerAvatar, { borderColor: theme.accent, backgroundColor: theme.card }]}>
+            <Text style={[styles.headerAvatarText, { color: theme.accent }]}>{displayName.charAt(0).toUpperCase()}</Text>
           </View>
-          <View style={[styles.streakBadge, { backgroundColor: theme.dangerBg, borderColor: theme.danger }]}>
-            <Ionicons name="flame" size={14} color={theme.danger} style={{ marginRight: 4 }} />
-            <Text style={[styles.streakText, { color: theme.danger }]}>{streak}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.headerHi, { color: theme.subText }]}>Welcome back</Text>
+            <Text style={[styles.headerName, { color: theme.text }]} numberOfLines={1}>{displayName}</Text>
           </View>
         </View>
-        <TouchableOpacity style={[styles.avatarButton, { borderColor: theme.accent, backgroundColor: isDarkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.5)' }]} onPress={toggleMenu}>
-          <Ionicons name="person" size={20} color={theme.accent} />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <View style={[styles.streakPill, { backgroundColor: theme.dangerBg, borderColor: theme.danger }]}>
+            <Ionicons name="flame" size={16} color={theme.danger} style={{ marginRight: 4 }} />
+            <Text style={[styles.streakPillText, { color: theme.danger }]}>{streak}</Text>
+          </View>
+          <TouchableOpacity style={[styles.menuButton, { borderColor: theme.accent, backgroundColor: isDarkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.5)' }]} onPress={toggleMenu}>
+            <Ionicons name="menu" size={22} color={theme.accent} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.mainContent}>
@@ -253,7 +259,7 @@ export default function DashboardScreen() {
           <ScrollView contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 24 }} showsVerticalScrollIndicator={false}>
             
             <View style={styles.panelHeader}>
-              <Text style={[styles.panelTitle, { color: theme.subText }]}>SYS_COMMAND_v1.7</Text>
+              <Text style={[styles.panelTitle, { color: theme.accent }]}>⚡ SWIPEIQ</Text>
               <TouchableOpacity onPress={toggleMenu} style={[styles.closeButton, { borderColor: theme.accent, backgroundColor: isDarkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.5)' }]}>
                 <Ionicons name="close" size={24} color={theme.accent} />
               </TouchableOpacity>
@@ -382,6 +388,15 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 24, paddingTop: 40 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 },
+  headerAvatar: { width: 46, height: 46, borderRadius: 23, borderWidth: 1.5, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  headerAvatarText: { fontSize: 20, fontWeight: '900' },
+  headerHi: { fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
+  headerName: { fontSize: 18, fontWeight: '900', marginTop: 1 },
+  headerRight: { flexDirection: 'row', alignItems: 'center' },
+  streakPill: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, borderWidth: 1, marginRight: 10 },
+  streakPillText: { fontSize: 14, fontWeight: '900' },
+  menuButton: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center', borderWidth: 1 },
   rankBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, marginRight: 10 },
   rankText: { fontSize: 14, fontWeight: 'bold' },
   streakBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, borderWidth: 1 },

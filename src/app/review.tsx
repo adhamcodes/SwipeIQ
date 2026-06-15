@@ -33,6 +33,17 @@ export default function ReviewScreen() {
 
   const bubbleAnim = useRef(new Animated.Value(0)).current;
   const position = useRef(new Animated.ValueXY()).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, { toValue: 1, duration: 1400, useNativeDriver: false }),
+        Animated.timing(glowAnim, { toValue: 0, duration: 1400, useNativeDriver: false }),
+      ]),
+    ).start();
+  }, [glowAnim]);
+  const glowBorder = glowAnim.interpolate({ inputRange: [0, 1], outputRange: [theme.border, theme.accent] });
 
   const stateRef = useRef({ currentIndex, showAnswer, comboCount });
   useEffect(() => {
@@ -218,7 +229,7 @@ export default function ReviewScreen() {
       </View>
 
       <View style={styles.cardContainer}>
-        <Animated.View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }, getCardStyle()]} {...panResponder.panHandlers}>
+        <Animated.View style={[styles.card, { backgroundColor: theme.card, borderColor: glowBorder, borderWidth: 2, shadowColor: theme.accent, shadowOpacity: 0.45, shadowRadius: 22 }, getCardStyle()]} {...panResponder.panHandlers}>
           <Text style={[styles.deckTag, { color: theme.subText }]} numberOfLines={1}>{currentCard.deckTitle}</Text>
           <Text style={[styles.label, { color: theme.accent }]}>{showAnswer ? 'ANSWER' : 'QUESTION'}</Text>
           <ScrollView contentContainerStyle={styles.scrollText} showsVerticalScrollIndicator={false}>
