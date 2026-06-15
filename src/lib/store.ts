@@ -17,6 +17,7 @@ export interface Flashcard {
 export interface SyncableState {
   savedDecks: Deck[];
   streak: number;
+  lastStudyDate: string;
   xp: number;
   accentColor: string;
   isRoastMode: boolean;
@@ -56,8 +57,11 @@ interface AppState {
   
   // Progression
   streak: number;
+  lastStudyDate: string;
   xp: number;
   addXP: (amount: number) => void;
+  recordStudyCompletion: () => void;
+  refreshStreak: () => void;
   
   // Settings
   accentColor: string;
@@ -92,12 +96,40 @@ export const useStore = create<AppState>()(
       applyCloudState: (incoming) => set((state) => ({ ...state, ...incoming })),
 
       // Clear this device's data (used on sign-out so the next person can't see it).
-      resetLocal: () => set({ savedDecks: [], xp: 0, streak: 0, dailySwipes: 0 }),
+      resetLocal: () => set({ savedDecks: [], xp: 0, streak: 0, lastStudyDate: '', dailySwipes: 0 }),
 
       
       streak: 0,
+      lastStudyDate: '',
       xp: 0,
       addXP: (amount) => set((state) => ({ xp: state.xp + amount })),
+
+      // Count one study day. Called ONCE when a session is completed.
+      // - Same day again: no change (can't farm streak by repeating decks).
+      // - Yesterday was the last study day: streak grows by 1.
+      // - Otherwise (gap, or first ever): streak resets to 1.
+      recordStudyCompletion: () => set((state) => {
+        const todayStr = new Date().toDateString();
+        if (state.lastStudyDate === todayStr) return {} as any;
+
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toDateString();
+
+        const newStreak = state.lastStudyDate === yesterdayStr ? state.streak + 1 : 1;
+        return { streak: newStreak, lastStudyDate: todayStr };
+      }),
+
+      // On app open: if the user missed a day, the streak is broken -> show 0.
+      refreshStreak: () => set((state) => {
+        if (!state.lastStudyDate) return {} as any;
+        const todayStr = new Date().toDateString();
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toDateString();
+        if (state.lastStudyDate === todayStr || state.lastStudyDate === yesterdayStr) return {} as any;
+        return { streak: 0 };
+      }),
       
       accentColor: '#00E5FF',
       isRoastMode: false,

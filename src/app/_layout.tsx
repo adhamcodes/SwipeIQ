@@ -1,4 +1,5 @@
 import { Slot, useRouter, useSegments } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { pullStateFromCloud, startSync, stopSync } from '../lib/cloud-sync';
@@ -7,6 +8,7 @@ import { supabase } from '../lib/supabase';
 
 export default function RootLayout() {
   const [isInitialized, setIsInitialized] = useState(false);
+  const isDarkMode = useStore((s) => s.isDarkMode);
   const router = useRouter();
   const segments = useSegments();
 
@@ -72,11 +74,17 @@ export default function RootLayout() {
   if (!isInitialized) {
     return (
       <View style={{ flex: 1, backgroundColor: '#121212', justifyContent: 'center', alignItems: 'center' }}>
+        <StatusBar style="light" />
         <ActivityIndicator size="large" color="#6C63FF" />
       </View>
     );
   }
 
   // If they pass the checks, render the app normally
-  return <Slot />;
+  return (
+    <>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
+      <Slot />
+    </>
+  );
 }

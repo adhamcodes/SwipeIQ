@@ -18,7 +18,7 @@ export default function BossArenaScreen() {
   const router = useRouter();
   
   // ADDED: incrementDailySwipes
-  const { savedDecks, updateDeck, isHapticsEnabled, isAudioEnabled, streak, setSetting, addXP, isDarkMode, accentColor, incrementDailySwipes } = useStore();
+  const { savedDecks, updateDeck, isHapticsEnabled, isAudioEnabled, streak, recordStudyCompletion, addXP, isDarkMode, accentColor, incrementDailySwipes } = useStore();
   
   const baseTheme = getThemeColors(isDarkMode, accentColor);
   const theme = {
@@ -120,8 +120,7 @@ export default function BossArenaScreen() {
       setCurrentIndex(currentIndex + 1);
     } else {
       triggerHaptic('success');
-      const newStreak = streak + 1;
-      setSetting('streak', newStreak);
+      recordStudyCompletion();
       router.replace({
         pathname: '/summary',
         params: {

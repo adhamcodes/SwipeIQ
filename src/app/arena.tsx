@@ -16,7 +16,7 @@ export default function ArenaScreen() {
   const router = useRouter();
   
   // ADDED: incrementDailySwipes
-  const { savedDecks, updateDeck, isHapticsEnabled, isAudioEnabled, isDarkMode, accentColor, streak, setSetting, addXP, incrementDailySwipes } = useStore();
+  const { savedDecks, updateDeck, isHapticsEnabled, isAudioEnabled, isDarkMode, accentColor, streak, recordStudyCompletion, addXP, incrementDailySwipes } = useStore();
   const deck = savedDecks.find((d) => d.id === deckId);
   
   const theme = getThemeColors(isDarkMode, accentColor);
@@ -168,8 +168,7 @@ export default function ArenaScreen() {
       setCurrentIndex(currentIndex + 1);
     } else {
       triggerHaptic('success');
-      const newStreak = streak + 1;
-      setSetting('streak', newStreak);
+      recordStudyCompletion();
       router.replace({
         pathname: '/summary',
         params: {
