@@ -95,7 +95,7 @@ export default function BossArenaScreen() {
     );
 
     if (quality === 'MASTERED') {
-      addXP(15);
+      addXP(10);
       rightRef.current += 1;
     }
 
@@ -239,7 +239,7 @@ export default function BossArenaScreen() {
             <Text style={[styles.text, { color: theme.text }]}>{showAnswer ? currentCard.answer : currentCard.question}</Text>
           </ScrollView>
           <View style={styles.footerHints}>
-            {!showAnswer ? <Text style={[styles.hint, { color: theme.subText }]}>Tap to analyze</Text> : <Text style={[styles.swipeHint, { color: theme.danger }]}>Swipe Left if overwhelmed • Swipe Right if neutralized (+15 XP)</Text>}
+            {!showAnswer ? <Text style={[styles.hint, { color: theme.subText }]}>Tap to analyze</Text> : <Text style={[styles.swipeHint, { color: theme.danger }]}>Swipe Left if overwhelmed • Swipe Right if neutralized (+10 XP)</Text>}
           </View>
         </Animated.View>
       </View>

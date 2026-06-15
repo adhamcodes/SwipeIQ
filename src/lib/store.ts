@@ -2,6 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+// How many card swipes complete the Daily Bounty (and its one-time XP reward).
+const DAILY_BOUNTY_TARGET = 20;
+const DAILY_BOUNTY_XP = 50;
+
 export interface Flashcard {
   id: string;
   question: string;
@@ -27,6 +31,7 @@ export interface SyncableState {
   isRemindersEnabled: boolean;
   dailySwipes: number;
   lastSwipeDate: string;
+  bountyClaimedDate: string;
 }
 
 export interface Deck {
@@ -75,6 +80,7 @@ interface AppState {
   // NEW: Dashboard Intelligence
   dailySwipes: number;
   lastSwipeDate: string;
+  bountyClaimedDate: string;
   incrementDailySwipes: () => void;
   getPriorityDeck: () => Deck | undefined;
   getDueCards: () => DueCard[];
@@ -96,7 +102,7 @@ export const useStore = create<AppState>()(
       applyCloudState: (incoming) => set((state) => ({ ...state, ...incoming })),
 
       // Clear this device's data (used on sign-out so the next person can't see it).
-      resetLocal: () => set({ savedDecks: [], xp: 0, streak: 0, lastStudyDate: '', dailySwipes: 0 }),
+      resetLocal: () => set({ savedDecks: [], xp: 0, streak: 0, lastStudyDate: '', dailySwipes: 0, bountyClaimedDate: '' }),
 
       
       streak: 0,
@@ -142,14 +148,21 @@ export const useStore = create<AppState>()(
       // NEW: Dashboard Intelligence Implementation
       dailySwipes: 0,
       lastSwipeDate: new Date().toDateString(),
-      
+      bountyClaimedDate: '',
+
       incrementDailySwipes: () => set((state) => {
         const today = new Date().toDateString();
-        // Reset the counter if it is a new day
-        if (state.lastSwipeDate !== today) {
-          return { dailySwipes: 1, lastSwipeDate: today };
+        const newDay = state.lastSwipeDate !== today;
+        const dailySwipes = newDay ? 1 : state.dailySwipes + 1;
+        // On a new day, the bounty becomes claimable again.
+        let bountyClaimedDate = newDay ? '' : state.bountyClaimedDate;
+        let xp = state.xp;
+        // Award the Daily Bounty XP exactly once, the moment the target is hit.
+        if (dailySwipes >= DAILY_BOUNTY_TARGET && bountyClaimedDate !== today) {
+          xp += DAILY_BOUNTY_XP;
+          bountyClaimedDate = today;
         }
-        return { dailySwipes: state.dailySwipes + 1 };
+        return { dailySwipes, lastSwipeDate: today, bountyClaimedDate, xp };
       }),
 
       getPriorityDeck: () => {

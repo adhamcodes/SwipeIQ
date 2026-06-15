@@ -39,6 +39,7 @@ function getSyncableState(): SyncableState {
     isRemindersEnabled: s.isRemindersEnabled,
     dailySwipes: s.dailySwipes,
     lastSwipeDate: s.lastSwipeDate,
+    bountyClaimedDate: s.bountyClaimedDate,
   };
 }
 
