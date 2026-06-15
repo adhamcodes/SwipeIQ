@@ -3,7 +3,8 @@ import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Dimensions, Easing, PanResponder, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Dimensions, Easing, PanResponder, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { applySM2, QUALITY_FAILURE, QUALITY_SUCCESS } from '../lib/sm2';
 import { Flashcard, getThemeColors, useStore } from '../lib/store';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -29,6 +30,10 @@ export default function BossArenaScreen() {
 
   const [bossDeck, setBossDeck] = useState<BossCard[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Session stats for the summary screen.
+  const startXpRef = useRef(useStore.getState().xp);
+  const rightRef = useRef(0);
 
   useEffect(() => {
     let allCards: BossCard[] = [];
@@ -82,34 +87,51 @@ export default function BossArenaScreen() {
     if (!bossDeck || !bossDeck[currentIndex]) return;
 
     const targetCard = bossDeck[currentIndex];
-    let { repetition, interval, eFactor } = targetCard;
+
+    // Run the proper SM-2 spaced-repetition algorithm.
+    const sm2 = applySM2(
+      { repetition: targetCard.repetition, interval: targetCard.interval, eFactor: targetCard.eFactor },
+      quality === 'MASTERED' ? QUALITY_SUCCESS : QUALITY_FAILURE,
+    );
 
     if (quality === 'MASTERED') {
-      interval = repetition === 0 ? 1 : repetition === 1 ? 6 : Math.round(interval * eFactor);
-      repetition += 1; eFactor += 0.1;
       addXP(15);
-    } else {
-      repetition = 0; interval = 1; eFactor = Math.max(1.3, eFactor - 0.2);
+      rightRef.current += 1;
     }
 
+    // Write the result back to the card's real home deck (without the temporary boss fields).
     const parentDeck = savedDecks.find(d => d.id === targetCard.deckId);
     if (parentDeck) {
+      const original = parentDeck.cards[targetCard.originalIndex];
       const updatedCards = [...parentDeck.cards];
-      updatedCards[targetCard.originalIndex] = { ...targetCard, repetition, interval, eFactor };
+      updatedCards[targetCard.originalIndex] = {
+        ...original,
+        repetition: sm2.repetition,
+        interval: sm2.interval,
+        eFactor: sm2.eFactor,
+        nextReviewTimestamp: sm2.nextReviewTimestamp,
+      } as Flashcard;
       updateDeck({ ...parentDeck, cards: updatedCards });
     }
 
     setShowAnswer(false);
-    
+
     if (currentIndex < bossDeck.length - 1) {
       setCurrentIndex(currentIndex + 1);
     } else {
       triggerHaptic('success');
       const newStreak = streak + 1;
-      setSetting('streak', newStreak); 
-      Alert.alert("Boss Defeated! 💀", `You survived the gauntlet. Streak increased to ${newStreak}! 🔥`, [
-        { text: "Return to Base", onPress: () => router.replace('/') }
-      ]);
+      setSetting('streak', newStreak);
+      router.replace({
+        pathname: '/summary',
+        params: {
+          total: String(bossDeck.length),
+          right: String(rightRef.current),
+          startXP: String(startXpRef.current),
+          endXP: String(useStore.getState().xp),
+          mode: 'boss',
+        },
+      });
     }
   };
 

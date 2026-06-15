@@ -52,13 +52,13 @@ export default function GeneratorScreen() {
     setErrorText('');
     
     try {
-      const advancedPrompt = `Generate exactly ${cardCount} flashcards at an ${difficulty} difficulty level about: ${topic}`;
-      const cards = await generateFlashcards(advancedPrompt);
-      
+      const cards = await generateFlashcards({ topic, count: cardCount, difficulty });
+
       const newDeck = { id: Date.now().toString(), title: topic, cards, createdAt: Date.now() };
       addDeck(newDeck);
       triggerHaptic('success');
-      router.replace('/');
+      // Go straight into the Arena to swipe the freshly made deck.
+      router.replace({ pathname: '/arena', params: { deckId: newDeck.id } });
     } catch (error: any) {
       triggerHaptic('heavy');
       setErrorText(error.message || "Failed to connect to the AI network.");

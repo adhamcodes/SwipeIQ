@@ -3,7 +3,8 @@ import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Dimensions, PanResponder, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Dimensions, PanResponder, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { applySM2, QUALITY_FAILURE, QUALITY_SUCCESS } from '../lib/sm2';
 import { Flashcard, getThemeColors, useStore } from '../lib/store';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -24,6 +25,10 @@ export default function ArenaScreen() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [feedback, setFeedback] = useState<{text: string, color: string} | null>(null);
   const [comboCount, setComboCount] = useState(0);
+
+  // Session stats for the summary screen.
+  const startXpRef = useRef(useStore.getState().xp);
+  const rightRef = useRef(0);
   
   const bubbleAnim = useRef(new Animated.Value(0)).current;
   const position = useRef(new Animated.ValueXY()).current;
@@ -130,37 +135,51 @@ export default function ArenaScreen() {
     const { currentIndex, deck, comboCount } = stateRef.current;
     if (!deck) return;
 
-    let { repetition, interval, eFactor } = deck.cards[currentIndex];
+    const card = deck.cards[currentIndex];
+
+    // Run the proper SM-2 spaced-repetition algorithm.
+    const sm2 = applySM2(
+      { repetition: card.repetition, interval: card.interval, eFactor: card.eFactor },
+      quality === 'MASTERED' ? QUALITY_SUCCESS : QUALITY_FAILURE,
+    );
 
     if (quality === 'MASTERED') {
-      interval = repetition === 0 ? 1 : repetition === 1 ? 6 : Math.round(interval * eFactor);
-      repetition += 1;
-      eFactor += 0.1;
-      addXP(10); 
-      setComboCount(comboCount + 1); 
+      addXP(10);
+      setComboCount(comboCount + 1);
+      rightRef.current += 1;
     } else {
-      repetition = 0; 
-      interval = 1; 
-      eFactor = Math.max(1.3, eFactor - 0.2);
-      setComboCount(0); 
-      triggerHaptic('error'); 
+      setComboCount(0);
+      triggerHaptic('error');
     }
 
-    const updatedCard: Flashcard = { ...deck.cards[currentIndex], repetition, interval, eFactor };
+    const updatedCard: Flashcard = {
+      ...card,
+      repetition: sm2.repetition,
+      interval: sm2.interval,
+      eFactor: sm2.eFactor,
+      nextReviewTimestamp: sm2.nextReviewTimestamp,
+    };
     const updatedCards = [...deck.cards];
     updatedCards[currentIndex] = updatedCard;
     updateDeck({ ...deck, cards: updatedCards });
     setShowAnswer(false);
-    
+
     if (currentIndex < deck.cards.length - 1) {
       setCurrentIndex(currentIndex + 1);
     } else {
       triggerHaptic('success');
       const newStreak = streak + 1;
       setSetting('streak', newStreak);
-      Alert.alert("Arena Conquered! 🏆", `You completed this deck. Global Streak increased to ${newStreak}! 🔥`, [
-        { text: "Return to Base", onPress: () => router.replace('/') }
-      ]);
+      router.replace({
+        pathname: '/summary',
+        params: {
+          total: String(deck.cards.length),
+          right: String(rightRef.current),
+          startXP: String(startXpRef.current),
+          endXP: String(useStore.getState().xp),
+          mode: 'normal',
+        },
+      });
     }
   };
 
