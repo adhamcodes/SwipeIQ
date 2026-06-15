@@ -17,10 +17,11 @@ export default function DashboardScreen() {
   const { 
     savedDecks, streak, xp, accentColor, 
     isRoastMode, isHapticsEnabled, isAudioEnabled, isDarkMode, isRemindersEnabled,
-    setSetting, wipeVault, dailySwipes, getPriorityDeck, getDueCount
+    setSetting, wipeVault, dailySwipes, getPriorityDeck, getDueCount, refreshStreak
   } = useStore();
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [displayName, setDisplayName] = useState('Scholar');
   const slideAnim = useRef(new Animated.Value(SCREEN_WIDTH)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
 
@@ -29,12 +30,20 @@ export default function DashboardScreen() {
   const dueCount = getDueCount();
   const bountyProgress = Math.min(dailySwipes / DAILY_BOUNTY_TARGET, 1);
   const isBountyComplete = dailySwipes >= DAILY_BOUNTY_TARGET;
+  const bountyShown = Math.min(dailySwipes, DAILY_BOUNTY_TARGET);
 
-  // On first load, (re)schedule the daily reminder if the user wants it.
+  // On first load: reset a broken streak, schedule reminders, and load the user's name.
   useEffect(() => {
+    refreshStreak();
     if (isRemindersEnabled) {
       setRemindersEnabled(true).catch(() => {});
     }
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      const metaName = (user.user_metadata?.first_name as string) || '';
+      const fallback = user.email ? user.email.split('@')[0] : 'Scholar';
+      setDisplayName(metaName || fallback);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -117,7 +126,7 @@ export default function DashboardScreen() {
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <View style={[styles.rankBadge, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
-            <Text style={[styles.rankText, { color: theme.text }]}>{rank}</Text>
+            <Text style={[styles.rankText, { color: theme.text }]} numberOfLines={1}>{displayName}</Text>
           </View>
           <View style={[styles.streakBadge, { backgroundColor: theme.dangerBg, borderColor: theme.danger }]}>
             <Ionicons name="flame" size={14} color={theme.danger} style={{ marginRight: 4 }} />
@@ -174,7 +183,7 @@ export default function DashboardScreen() {
               <View style={[styles.bountyFill, { width: `${bountyProgress * 100}%`, backgroundColor: isBountyComplete ? '#32CD32' : theme.accent }]} />
             </View>
             <Text style={[styles.bountyCount, { color: isBountyComplete ? '#32CD32' : theme.text }]}>
-              {dailySwipes}/{DAILY_BOUNTY_TARGET}
+              {isBountyComplete ? `${DAILY_BOUNTY_TARGET}/${DAILY_BOUNTY_TARGET} ✓` : `${bountyShown}/${DAILY_BOUNTY_TARGET}`}
             </Text>
           </View>
         </View>
@@ -260,8 +269,8 @@ export default function DashboardScreen() {
                   <Ionicons name="person" size={36} color={theme.accent} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.profileName, { color: theme.text }]}>{rank}</Text>
-                  <Text style={[styles.profileRank, { color: theme.accent }]}>{xp} XP / {nextTarget} XP</Text>
+                  <Text style={[styles.profileName, { color: theme.text }]} numberOfLines={1}>{displayName}</Text>
+                  <Text style={[styles.profileRank, { color: theme.accent }]}>{rank} • {xp} / {nextTarget} XP</Text>
                   <View style={styles.xpTrack}>
                     <View style={[styles.xpFill, { width: `${xpProgress * 100}%`, backgroundColor: theme.accent }]} />
                   </View>

@@ -16,7 +16,7 @@ export default function ReviewScreen() {
 
   const {
     updateDeck, savedDecks, isHapticsEnabled, isAudioEnabled, isDarkMode, accentColor,
-    streak, setSetting, addXP, incrementDailySwipes,
+    streak, recordStudyCompletion, addXP, incrementDailySwipes,
   } = useStore();
 
   const theme = getThemeColors(isDarkMode, accentColor);
@@ -84,8 +84,7 @@ export default function ReviewScreen() {
 
   const finish = () => {
     triggerHaptic('success');
-    const newStreak = streak + 1;
-    setSetting('streak', newStreak);
+    recordStudyCompletion();
     router.replace({
       pathname: '/summary',
       params: {

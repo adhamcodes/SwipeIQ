@@ -29,6 +29,7 @@ function getSyncableState(): SyncableState {
   return {
     savedDecks: s.savedDecks,
     streak: s.streak,
+    lastStudyDate: s.lastStudyDate,
     xp: s.xp,
     accentColor: s.accentColor,
     isRoastMode: s.isRoastMode,
