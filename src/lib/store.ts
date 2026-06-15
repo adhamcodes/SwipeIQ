@@ -9,6 +9,22 @@ export interface Flashcard {
   repetition: number;
   interval: number;
   eFactor: number;
+  // When this card is next due for review (ms epoch). Optional for older cards.
+  nextReviewTimestamp?: number;
+}
+
+// The slice of state that gets backed up to the cloud (no functions / no transient UI).
+export interface SyncableState {
+  savedDecks: Deck[];
+  streak: number;
+  xp: number;
+  accentColor: string;
+  isRoastMode: boolean;
+  isHapticsEnabled: boolean;
+  isAudioEnabled: boolean;
+  isDarkMode: boolean;
+  dailySwipes: number;
+  lastSwipeDate: string;
 }
 
 export interface Deck {
@@ -25,6 +41,9 @@ interface AppState {
   deleteDeck: (id: string) => void;
   updateDeck: (deck: Deck) => void;
   wipeVault: () => void;
+  // Cloud sync helpers
+  applyCloudState: (incoming: Partial<SyncableState>) => void;
+  resetLocal: () => void;
   
   // Progression
   streak: number;
@@ -55,7 +74,14 @@ export const useStore = create<AppState>()(
       updateDeck: (updatedDeck) => set((state) => ({
         savedDecks: state.savedDecks.map(d => d.id === updatedDeck.id ? updatedDeck : d)
       })),
-      wipeVault: () => set({ savedDecks: [], xp: 0 }),
+      wipeVault: () => set({ savedDecks: [], xp: 0, streak: 0 }),
+
+      // Overwrite local data with a backup pulled from the cloud.
+      applyCloudState: (incoming) => set((state) => ({ ...state, ...incoming })),
+
+      // Clear this device's data (used on sign-out so the next person can't see it).
+      resetLocal: () => set({ savedDecks: [], xp: 0, streak: 0, dailySwipes: 0 }),
+
       
       streak: 0,
       xp: 0,
