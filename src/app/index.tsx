@@ -178,6 +178,7 @@ export default function DashboardScreen() {
           textColor={theme.text}
           subTextColor={theme.subText}
           borderColor={theme.border}
+          hapticsEnabled={isHapticsEnabled}
         />
 
         {/* DUE TODAY CTA */}
@@ -380,10 +381,10 @@ export default function DashboardScreen() {
 
               <View style={styles.settingRow}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Ionicons name="hardware-chip" size={20} color="#BD00FF" style={{ marginRight: 15 }} />
+                  <Ionicons name="hardware-chip" size={20} color={theme.accent} style={{ marginRight: 15 }} />
                   <View><Text style={[styles.settingTitle, { color: theme.text }]}>Haptic Engine</Text><Text style={[styles.settingDesc, { color: theme.subText }]}>Physical feedback</Text></View>
                 </View>
-                <Switch value={isHapticsEnabled} onValueChange={(val) => { setSetting('isHapticsEnabled', val); triggerHaptic(); }} trackColor={{ false: '#D4D4D8', true: 'rgba(189, 0, 255, 0.3)' }} thumbColor={isHapticsEnabled ? '#BD00FF' : '#888'} />
+                <Switch value={isHapticsEnabled} onValueChange={(val) => { setSetting('isHapticsEnabled', val); triggerHaptic(); }} trackColor={{ false: '#D4D4D8', true: 'rgba(128,128,128,0.3)' }} thumbColor={isHapticsEnabled ? theme.accent : '#888'} />
               </View>
               <View style={[styles.divider, { backgroundColor: theme.panelBorder }]} />
 

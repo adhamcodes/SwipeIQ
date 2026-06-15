@@ -58,14 +58,21 @@ export default function RootLayout() {
   }, [segments]); // Re-run if the user changes screens
 
   const handleRouting = (session: any) => {
-    // Are they currently trying to view the login screen?
-    const isLoginScreen = segments[0] === 'login';
+    const seg0 = segments[0];
+    const onboarded = useStore.getState().hasOnboarded;
 
+    // First-time users see the onboarding tutorial before anything else.
+    if (!onboarded) {
+      if (seg0 !== 'onboarding') router.replace('/onboarding');
+      return;
+    }
+
+    const isLoginScreen = seg0 === 'login';
     if (!session && !isLoginScreen) {
-      // Security Check Failed: Not logged in, but trying to view the app. Kick them out.
+      // Not logged in, but trying to view the app. Send to login.
       router.replace('/login');
-    } else if (session && isLoginScreen) {
-      // Logged in, but trying to view the login page. Send them to Dashboard.
+    } else if (session && (isLoginScreen || seg0 === 'onboarding')) {
+      // Logged in but on login/onboarding. Send to the dashboard.
       router.replace('/');
     }
   };
