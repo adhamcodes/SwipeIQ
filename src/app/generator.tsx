@@ -17,6 +17,7 @@ export default function GeneratorScreen() {
   const [cardCount, setCardCount] = useState(20);
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorText, setErrorText] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
   
   const { addDeck, isHapticsEnabled, isDarkMode, accentColor } = useStore();
   const theme = getThemeColors(isDarkMode, accentColor);
@@ -103,29 +104,58 @@ export default function GeneratorScreen() {
             </Text>
           </View>
 
-          {/* THE ANIMATED RGB NEON INPUT */}
-          <View style={[styles.rgbWrapper, { shadowColor: isDarkMode ? '#BD00FF' : theme.accent }]}>
-            {/* The Sweeping RGB Light Background */}
+          {/* PREMIUM AI PROMPT INPUT */}
+          <View style={[styles.rgbWrapper, { shadowColor: theme.accent, shadowOpacity: isFocused ? 0.6 : 0.28 }]}>
+            {/* Animated brand-gradient border (cyan -> violet shimmer) */}
             <Animated.View style={[styles.rgbAnimatedBackground, { transform: [{ translateX: sweep }] }]}>
               <LinearGradient 
-                colors={isDarkMode ? ['#00E5FF', '#BD00FF', '#FF0055', '#BD00FF', '#00E5FF'] : [theme.accent, theme.bg, theme.accent, theme.bg, theme.accent]} 
+                colors={[theme.accent, theme.secondary, theme.accent, theme.secondary, theme.accent]} 
                 style={{ flex: 1 }} 
                 start={{ x: 0, y: 0.5 }} 
                 end={{ x: 1, y: 0.5 }} 
               />
             </Animated.View>
             
-            {/* The Inner Dark Box */}
+            {/* Inner glass box */}
             <View style={[styles.innerInputBox, { backgroundColor: theme.card }]}>
-              <Text style={[styles.terminalLabel, { color: theme.accent }]}>{`> AI_PROMPT_INPUT`}</Text>
+              <View style={styles.promptHeaderRow}>
+                <View style={styles.promptLabelGroup}>
+                  <View style={[styles.aiChip, { backgroundColor: theme.accentBg }]}>
+                    <Ionicons name="sparkles" size={13} color={theme.accent} />
+                  </View>
+                  <Text style={[styles.promptLabel, { color: theme.subText }]}>WHAT DO YOU WANT TO MASTER?</Text>
+                </View>
+              </View>
+
               <TextInput
                 style={[styles.input, { color: theme.text }]}
                 placeholder="e.g., Deep Learning, Quantum Physics..."
                 placeholderTextColor={theme.subText}
                 value={topic}
                 onChangeText={setTopic}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                maxLength={120}
                 multiline
               />
+
+              <View style={styles.promptFooterRow}>
+                {topic.length > 0 ? (
+                  <TouchableOpacity
+                    onPress={() => { triggerHaptic('light'); setTopic(''); }}
+                    hitSlop={10}
+                    style={styles.clearBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear topic"
+                  >
+                    <Ionicons name="close-circle" size={16} color={theme.subText} />
+                    <Text style={[styles.clearText, { color: theme.subText }]}>Clear</Text>
+                  </TouchableOpacity>
+                ) : <View />}
+                <Text style={[styles.charCounter, { color: topic.length > 100 ? theme.danger : theme.subText }]}>
+                  {topic.length}/120
+                </Text>
+              </View>
             </View>
           </View>
 
@@ -270,8 +300,16 @@ const styles = StyleSheet.create({
   innerInputBox: {
     flex: 1,
     borderRadius: 18,
-    padding: 20,
+    padding: 18,
   },
+  promptHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  promptLabelGroup: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  aiChip: { width: 26, height: 26, borderRadius: 9, alignItems: 'center', justifyContent: 'center', marginRight: 9 },
+  promptLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 1.2 },
+  promptFooterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 14 },
+  clearBtn: { flexDirection: 'row', alignItems: 'center' },
+  clearText: { fontSize: 12, fontWeight: '700', marginLeft: 4 },
+  charCounter: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
   terminalLabel: {
     fontSize: 12,
     fontWeight: '900',
@@ -279,9 +317,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   input: { 
-    fontSize: 20, 
+    fontSize: 19, 
     fontWeight: '600', 
-    lineHeight: 28, 
+    lineHeight: 27, 
+    minHeight: 40,
     textAlignVertical: 'top' 
   },
 
