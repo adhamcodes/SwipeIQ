@@ -30,7 +30,10 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# API Keys & Secrets (CRITICAL)
+.env
+.env.local
+.env.*
 .env*.local
 
 # typescript
