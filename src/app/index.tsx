@@ -3,7 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Dimensions, Easing, SafeAreaView, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, Dimensions, Easing, SafeAreaView, ScrollView, StatusBar, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { setRemindersEnabled } from '../lib/notifications';
 import { getThemeColors, useStore } from '../lib/store';
 import { supabase } from '../lib/supabase';
@@ -23,6 +23,7 @@ export default function DashboardScreen() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [panelMode, setPanelMode] = useState<'menu' | 'profile'>('menu');
   const [displayName, setDisplayName] = useState('Scholar');
+  const [userEmail, setUserEmail] = useState('');
   const slideAnim = useRef(new Animated.Value(SCREEN_WIDTH)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
 
@@ -44,6 +45,7 @@ export default function DashboardScreen() {
       const metaName = (user.user_metadata?.first_name as string) || '';
       const fallback = user.email ? user.email.split('@')[0] : 'Scholar';
       setDisplayName(metaName || fallback);
+      setUserEmail(user.email || '');
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -82,23 +84,25 @@ export default function DashboardScreen() {
     if (isHapticsEnabled) Haptics.impactAsync(style);
   };
 
-  const animatePanel = (open: boolean) => {
-    Animated.parallel([
-      Animated.timing(slideAnim, { toValue: open ? 0 : SCREEN_WIDTH, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(overlayOpacity, { toValue: open ? 1 : 0, duration: 350, useNativeDriver: true })
-    ]).start();
-  };
+  const offScreenFor = (mode: 'menu' | 'profile') => (mode === 'profile' ? -SCREEN_WIDTH : SCREEN_WIDTH);
 
   const openPanel = (mode: 'menu' | 'profile') => {
     triggerHaptic();
     setPanelMode(mode);
+    slideAnim.setValue(offScreenFor(mode));
     setIsMenuOpen(true);
-    animatePanel(true);
+    Animated.parallel([
+      Animated.timing(slideAnim, { toValue: 0, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(overlayOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
+    ]).start();
   };
 
   const closePanel = () => {
     setIsMenuOpen(false);
-    animatePanel(false);
+    Animated.parallel([
+      Animated.timing(slideAnim, { toValue: offScreenFor(panelMode), duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(overlayOpacity, { toValue: 0, duration: 350, useNativeDriver: true }),
+    ]).start();
   };
 
   const handleWipeVault = () => {
@@ -263,9 +267,9 @@ export default function DashboardScreen() {
         <TouchableOpacity style={{ flex: 1 }} onPress={closePanel} activeOpacity={1} />
       </Animated.View>
 
-      <Animated.View style={[styles.slidingPanel, { backgroundColor: theme.panel, borderColor: theme.panelBorder, transform: [{ translateX: slideAnim }], shadowColor: theme.accent }]}>
+      <Animated.View style={[styles.slidingPanel, panelMode === 'profile' ? { left: 0, borderRightWidth: 1 } : { right: 0, borderLeftWidth: 1 }, { backgroundColor: theme.panel, borderColor: theme.panelBorder, transform: [{ translateX: slideAnim }], shadowColor: theme.accent }]}>
         <SafeAreaView style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 24 }} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={{ paddingTop: (StatusBar.currentHeight || 0) + 8, paddingBottom: 40, paddingHorizontal: 24 }} showsVerticalScrollIndicator={false}>
             
             <View style={styles.panelHeader}>
               <Text style={[styles.panelTitle, { color: theme.accent }]}>{panelMode === 'profile' ? 'PROFILE' : '⚡ SWIPEIQ'}</Text>
@@ -286,6 +290,7 @@ export default function DashboardScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.profileName, { color: theme.text }]} numberOfLines={1}>{displayName}</Text>
+                  {userEmail ? <Text style={[styles.profileEmail, { color: theme.subText }]} numberOfLines={1}>{userEmail}</Text> : null}
                   <Text style={[styles.profileRank, { color: theme.accent }]}>{rank} • {xp} / {nextTarget} XP</Text>
                   <View style={styles.xpTrack}>
                     <View style={[styles.xpFill, { width: `${xpProgress * 100}%`, backgroundColor: theme.accent }]} />
@@ -311,6 +316,14 @@ export default function DashboardScreen() {
               <View style={[styles.hudBox, { backgroundColor: theme.hudBg, borderColor: theme.panelBorder, borderLeftColor: theme.accent }]}>
                 <Text style={[styles.hudLabel, { color: theme.accent }]}>MASTERY_</Text>
                 <Text style={[styles.hudValue, { color: theme.accent }]}>{masteryPercent}%</Text>
+              </View>
+              <View style={[styles.hudBox, { backgroundColor: theme.hudBg, borderColor: theme.panelBorder, borderLeftColor: theme.danger }]}>
+                <Text style={[styles.hudLabel, { color: theme.subText }]}>STREAK_</Text>
+                <Text style={[styles.hudValue, { color: theme.text }]}>{streak}</Text>
+              </View>
+              <View style={[styles.hudBox, { backgroundColor: theme.hudBg, borderColor: theme.panelBorder, borderLeftColor: theme.accent }]}>
+                <Text style={[styles.hudLabel, { color: theme.subText }]}>DUE_</Text>
+                <Text style={[styles.hudValue, { color: theme.text }]}>{dueCount}</Text>
               </View>
             </View>
             </>)}
@@ -451,7 +464,7 @@ const styles = StyleSheet.create({
 
   // SIDEBAR STYLES
   overlayBackground: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 10 },
-  slidingPanel: { position: 'absolute', top: 0, bottom: 0, right: 0, width: SCREEN_WIDTH * 0.85, zIndex: 20, borderLeftWidth: 1, shadowOffset: { width: -10, height: 0 }, shadowOpacity: 0.15, shadowRadius: 30, elevation: 20 },
+  slidingPanel: { position: 'absolute', top: 0, bottom: 0, width: SCREEN_WIDTH * 0.85, zIndex: 20, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.2, shadowRadius: 30, elevation: 20 },
   panelHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, paddingTop: 20 },
   panelTitle: { fontSize: 12, fontWeight: '900', letterSpacing: 4 },
   closeButton: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', borderWidth: 1 },
@@ -461,6 +474,7 @@ const styles = StyleSheet.create({
   profileSection: { flexDirection: 'row', alignItems: 'center' },
   largeAvatar: { width: 60, height: 60, borderRadius: 12, justifyContent: 'center', alignItems: 'center', borderWidth: 1, marginRight: 16 },
   profileName: { fontSize: 22, fontWeight: '900', letterSpacing: 1 },
+  profileEmail: { fontSize: 11, marginTop: 2, fontWeight: '500' },
   profileRank: { fontSize: 12, fontWeight: 'bold', marginTop: 4, letterSpacing: 1, marginBottom: 8 },
   xpTrack: { height: 4, backgroundColor: 'rgba(128,128,128,0.2)', borderRadius: 2, overflow: 'hidden' },
   xpFill: { height: '100%', borderRadius: 2 },
