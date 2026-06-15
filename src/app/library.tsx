@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -15,6 +16,7 @@ export default function LibraryScreen() {
   const theme = getThemeColors(isDarkMode, accentColor);
 
   const [search, setSearch] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const triggerHaptic = (type: 'light' | 'heavy') => {
     if (!isHapticsEnabled) return;
@@ -128,20 +130,32 @@ export default function LibraryScreen() {
       ) : (
         <>
           <View style={styles.searchWrap}>
-            <View style={[styles.searchBox, { backgroundColor: theme.card, borderColor: theme.border }]}>
-              <Ionicons name="search" size={18} color={theme.subText} style={{ marginRight: 8 }} />
-              <TextInput
-                style={[styles.searchInput, { color: theme.text }]}
-                placeholder="Search decks..."
-                placeholderTextColor={theme.subText}
-                value={search}
-                onChangeText={setSearch}
+            <View style={[styles.searchBorder, { shadowColor: theme.accent, shadowOpacity: isSearchFocused ? 0.5 : 0.16 }]}>
+              <LinearGradient
+                colors={isSearchFocused ? [theme.accent, theme.secondary] : [theme.border, theme.border]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={StyleSheet.absoluteFill}
               />
-              {search.length > 0 && (
-                <TouchableOpacity onPress={() => setSearch('')}>
-                  <Ionicons name="close-circle" size={18} color={theme.subText} />
-                </TouchableOpacity>
-              )}
+              <View style={[styles.searchBox, { backgroundColor: theme.card }]}>
+                <View style={[styles.searchChip, { backgroundColor: theme.accentBg }]}>
+                  <Ionicons name="search" size={15} color={theme.accent} />
+                </View>
+                <TextInput
+                  style={[styles.searchInput, { color: theme.text }]}
+                  placeholder="Search decks..."
+                  placeholderTextColor={theme.subText}
+                  value={search}
+                  onChangeText={setSearch}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
+                />
+                {search.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearch('')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Clear search">
+                    <Ionicons name="close-circle" size={18} color={theme.subText} />
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
           </View>
 
@@ -172,7 +186,9 @@ const styles = StyleSheet.create({
   listContent: { padding: 24, paddingBottom: 100 },
 
   searchWrap: { paddingHorizontal: 24, paddingTop: 8 },
-  searchBox: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, height: 48 },
+  searchBorder: { borderRadius: 14, padding: 1.5, overflow: 'hidden', shadowOffset: { width: 0, height: 4 }, shadowRadius: 12, elevation: 4 },
+  searchBox: { flexDirection: 'row', alignItems: 'center', borderRadius: 12.5, paddingHorizontal: 10, height: 50 },
+  searchChip: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
   searchInput: { flex: 1, fontSize: 15, fontWeight: '500' },
   noResults: { padding: 40, alignItems: 'center' },
 
