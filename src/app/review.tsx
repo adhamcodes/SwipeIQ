@@ -3,7 +3,8 @@ import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, PanResponder, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Dimensions, PanResponder, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { applySM2, QUALITY_FAILURE, QUALITY_SUCCESS } from '../lib/sm2';
 import { xpForRepetition } from '../lib/deck-utils';
 import { DueCard, Flashcard, getThemeColors, useStore } from '../lib/store';
@@ -261,7 +262,7 @@ const styles = StyleSheet.create({
   allDoneSub: { fontSize: 14, textAlign: 'center', marginBottom: 28 },
   homeBtn: { paddingVertical: 14, paddingHorizontal: 28, borderRadius: 12 },
   homeBtnText: { fontSize: 15, fontWeight: 'bold' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingTop: 40 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingTop: 8 },
   progress: { fontSize: 16, fontWeight: 'bold', letterSpacing: 1 },
   comboText: { fontSize: 12, fontWeight: '900', marginTop: 4, letterSpacing: 1 },
   streakBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1 },

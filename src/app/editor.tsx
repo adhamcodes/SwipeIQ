@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { makeCard } from '../lib/deck-utils';
 import { Flashcard, getThemeColors, useStore } from '../lib/store';
 
@@ -133,7 +134,7 @@ export default function EditorScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 40, paddingBottom: 12 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 },
   headerTitle: { fontSize: 18, fontWeight: '900', letterSpacing: 0.5 },
   saveBtn: { paddingHorizontal: 18, paddingVertical: 9, borderRadius: 12 },
   saveBtnText: { fontSize: 14, fontWeight: '900', letterSpacing: 1 },

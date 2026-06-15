@@ -3,7 +3,8 @@ import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, Easing, PanResponder, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Dimensions, Easing, PanResponder, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { applySM2, QUALITY_FAILURE, QUALITY_SUCCESS } from '../lib/sm2';
 import { Flashcard, getThemeColors, useStore } from '../lib/store';
 
@@ -100,7 +101,9 @@ export default function BossArenaScreen() {
     }
 
     // Write the result back to the card's real home deck (without the temporary boss fields).
-    const parentDeck = savedDecks.find(d => d.id === targetCard.deckId);
+    // Read the LATEST decks from the store (not the stale render-time snapshot), so reviewing
+    // several cards from the same deck in one fight doesn't overwrite earlier results.
+    const parentDeck = useStore.getState().savedDecks.find(d => d.id === targetCard.deckId);
     if (parentDeck) {
       const original = parentDeck.cards[targetCard.originalIndex];
       const updatedCards = [...parentDeck.cards];
@@ -251,7 +254,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 }, 
   timerTrack: { height: 6, width: '100%' },
   timerFill: { height: '100%', shadowOffset: {width: 0, height: 0}, shadowOpacity: 0.8, shadowRadius: 10 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingTop: 20 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingTop: 8 },
   progress: { fontSize: 14, fontWeight: '900', letterSpacing: 1 },
   streakBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
   streakText: { fontWeight: '900', marginLeft: 4, fontSize: 12 },

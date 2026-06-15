@@ -3,7 +3,8 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, Easing, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Animated, Dimensions, Easing, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { generateFlashcards } from '../lib/gemini';
 import { getThemeColors, useStore } from '../lib/store';
 
@@ -237,7 +238,7 @@ export default function GeneratorScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10 },
+  header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 10 },
   backButton: { padding: 4, alignSelf: 'flex-start' },
   content: { padding: 24, paddingBottom: 40 },
   

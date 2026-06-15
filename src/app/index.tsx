@@ -3,7 +3,8 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Dimensions, Easing, SafeAreaView, ScrollView, StatusBar, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, Dimensions, Easing, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { setRemindersEnabled } from '../lib/notifications';
 import { getThemeColors, useStore } from '../lib/store';
 import { getRankProgress } from '../lib/ranks';
@@ -283,7 +284,7 @@ export default function DashboardScreen() {
 
       <Animated.View style={[styles.slidingPanel, panelMode === 'profile' ? { left: 0, borderRightWidth: 1 } : { right: 0, borderLeftWidth: 1 }, { backgroundColor: theme.panel, borderColor: theme.panelBorder, transform: [{ translateX: slideAnim }], shadowColor: theme.accent }]}>
         <SafeAreaView style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={{ paddingTop: (StatusBar.currentHeight || 0) + 8, paddingBottom: 40, paddingHorizontal: 24 }} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={{ paddingTop: 8, paddingBottom: 40, paddingHorizontal: 24 }} showsVerticalScrollIndicator={false}>
             
             <View style={styles.panelHeader}>
               <Text style={[styles.panelTitle, { color: theme.accent }]}>{panelMode === 'profile' ? 'PROFILE' : '⚡ SWIPEIQ'}</Text>
@@ -427,7 +428,7 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 24, paddingTop: 40 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 24, paddingTop: 8 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 },
   headerAvatar: { width: 46, height: 46, borderRadius: 23, borderWidth: 1.5, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   headerAvatarText: { fontSize: 20, fontWeight: '900' },

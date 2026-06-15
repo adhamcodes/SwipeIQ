@@ -2,22 +2,29 @@ import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import type { Session } from '@supabase/supabase-js';
 import { pullStateFromCloud, startSync, stopSync } from '../lib/cloud-sync';
 import { useStore } from '../lib/store';
 import { supabase } from '../lib/supabase';
 
 export default function RootLayout() {
   const [isInitialized, setIsInitialized] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const isDarkMode = useStore((s) => s.isDarkMode);
   const router = useRouter();
   const segments = useSegments();
 
-  // --- CLOUD SYNC LIFECYCLE (runs once) ---
+  // --- AUTH + CLOUD SYNC LIFECYCLE (single subscription, runs once) ---
   useEffect(() => {
     let active = true;
 
-    const handleSession = async (session: any) => {
-      if (session) {
+    // React to a session changing: keep local `session` in sync AND manage cloud backup.
+    const handleSession = async (nextSession: Session | null) => {
+      if (!active) return;
+      setSession(nextSession);
+
+      if (nextSession) {
         // Signed in: load the cloud backup, then keep it in sync.
         await pullStateFromCloud();
         if (active) startSync();
@@ -28,10 +35,14 @@ export default function RootLayout() {
       }
     };
 
-    supabase.auth.getSession().then(({ data: { session } }) => handleSession(session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
-        handleSession(session);
+    supabase.auth.getSession().then(({ data: { session: initial } }) => {
+      handleSession(initial);
+      if (active) setIsInitialized(true);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
+        handleSession(nextSession);
       }
     });
 
@@ -42,22 +53,10 @@ export default function RootLayout() {
     };
   }, []);
 
+  // --- ROUTING GUARD (re-runs when the session or the current screen changes) ---
   useEffect(() => {
-    // 1. Check if they are already logged in when the app opens
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      handleRouting(session);
-      setIsInitialized(true);
-    });
+    if (!isInitialized) return;
 
-    // 2. Listen for log in / log out events in real-time
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      handleRouting(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [segments]); // Re-run if the user changes screens
-
-  const handleRouting = (session: any) => {
     const seg0 = segments[0];
     const onboarded = useStore.getState().hasOnboarded;
 
@@ -75,23 +74,23 @@ export default function RootLayout() {
       // Logged in but on login/onboarding. Send to the dashboard.
       router.replace('/');
     }
-  };
+  }, [session, segments, isInitialized, router]);
 
-  // Show a dark screen while we verify their security token
+  // Show a dark screen while we verify their security token.
   if (!isInitialized) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#121212', justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: '#0A0A0F', justifyContent: 'center', alignItems: 'center' }}>
         <StatusBar style="light" />
-        <ActivityIndicator size="large" color="#6C63FF" />
+        <ActivityIndicator size="large" color="#00E5FF" />
       </View>
     );
   }
 
-  // If they pass the checks, render the app normally
+  // If they pass the checks, render the app normally.
   return (
-    <>
+    <SafeAreaProvider>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       <Slot />
-    </>
+    </SafeAreaProvider>
   );
 }
