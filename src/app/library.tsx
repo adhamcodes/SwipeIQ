@@ -82,7 +82,9 @@ export default function LibraryScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
       <View style={styles.header}>
-        <Ionicons name="arrow-back" size={28} color={theme.text} onPress={() => router.back()} />
+        <TouchableOpacity hitSlop={12} accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={28} color={theme.text} />
+        </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.text }]}>Data Vault</Text>
         <TouchableOpacity onPress={() => { triggerHaptic('light'); router.push('/editor'); }} style={[styles.newBtn, { borderColor: theme.accent }]}>
           <Ionicons name="add" size={22} color={theme.accent} />

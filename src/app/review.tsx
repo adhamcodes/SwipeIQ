@@ -217,7 +217,9 @@ export default function ReviewScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
       <View style={styles.header}>
-        <Ionicons name="close" size={28} color={theme.text} onPress={() => router.replace('/')} />
+        <TouchableOpacity hitSlop={12} accessibilityRole="button" accessibilityLabel="Exit review session" onPress={() => router.replace('/')}>
+          <Ionicons name="close" size={28} color={theme.text} />
+        </TouchableOpacity>
         <View style={{ alignItems: 'center' }}>
           <Text style={[styles.progress, { color: theme.accent }]}>Review {currentIndex + 1} of {queue.length}</Text>
           <Text style={[styles.comboText, { color: comboCount > 2 ? theme.accent : theme.subText }]}>

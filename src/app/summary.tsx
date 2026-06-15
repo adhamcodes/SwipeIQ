@@ -46,7 +46,7 @@ export default function SummaryScreen() {
   }, []);
 
   const tierColor = getTierColor(endTier);
-  const bossColor = isRoastMode ? '#ef4444' : '#f59e0b';
+  const bossColor = isRoastMode ? theme.danger : theme.warning;
   const bossTitle = isRoastMode ? 'BARELY SURVIVED...' : 'BOSS DEFEATED!';
 
   const handleShare = async () => {
@@ -92,10 +92,10 @@ export default function SummaryScreen() {
               {!isBossMode && (
                 <>
                   <View style={styles.detailRow}><Text style={[styles.detailLabel, { color: theme.subText }]}>Rank:</Text><Text style={[styles.detailValue, { color: tierColor }]}>{endTier}</Text></View>
-                  <View style={styles.detailRow}><Text style={[styles.detailLabel, { color: theme.subText }]}>XP Gained:</Text><Text style={[styles.detailValue, { color: '#f59e0b' }]}>+{endXP - startXP}</Text></View>
+                  <View style={styles.detailRow}><Text style={[styles.detailLabel, { color: theme.subText }]}>XP Gained:</Text><Text style={[styles.detailValue, { color: theme.warning }]}>+{endXP - startXP}</Text></View>
                 </>
               )}
-              <View style={styles.detailRow}><Text style={[styles.detailLabel, { color: theme.subText }]}>Mastered:</Text><Text style={[styles.detailValue, { color: '#4ade80' }]}>{rightSwipes}</Text></View>
+              <View style={styles.detailRow}><Text style={[styles.detailLabel, { color: theme.subText }]}>Mastered:</Text><Text style={[styles.detailValue, { color: theme.success }]}>{rightSwipes}</Text></View>
               <View style={styles.detailRow}><Text style={[styles.detailLabel, { color: theme.subText }]}>Needs Work:</Text><Text style={[styles.detailValue, { color: theme.danger }]}>{totalCards - rightSwipes}</Text></View>
             </View>
           </View>

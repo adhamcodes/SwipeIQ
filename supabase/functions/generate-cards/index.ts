@@ -15,6 +15,8 @@ const ALLOWED_DIFFICULTIES = ["Beginner", "Intermediate", "Expert"]
 const MIN_CARDS = 1
 const MAX_CARDS = 50
 const DEFAULT_CARDS = 20
+// Max deck generations per user per day. Protects the shared Gemini quota/cost.
+const RATE_LIMIT_PER_DAY = 30
 
 // Small helper so every error reply looks the same and is easy to read.
 function jsonError(message: string, status: number) {
@@ -51,6 +53,24 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
       return jsonError("Your session is invalid. Please sign in again.", 401)
+    }
+
+    // 1b. RATE LIMIT: cap generations per user per day to protect the shared
+    //     AI quota/cost. Bumps an atomic per-day counter in the database.
+    //     If the rate-limit check itself errors, we fail open (allow) so a
+    //     glitch never blocks a paying/legit user.
+    try {
+      const { data: allowed, error: rlError } = await supabase.rpc("bump_ai_usage", {
+        p_limit: RATE_LIMIT_PER_DAY,
+      })
+      if (!rlError && allowed === false) {
+        return jsonError(
+          `You've hit today's limit of ${RATE_LIMIT_PER_DAY} deck generations. Please come back tomorrow.`,
+          429,
+        )
+      }
+    } catch (_e) {
+      // ignore rate-limit infrastructure errors (fail open)
     }
 
     // 2. VALIDATE INPUT: make sure the topic is a sensible, non-huge string,

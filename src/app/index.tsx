@@ -147,7 +147,7 @@ export default function DashboardScreen() {
       
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerLeft} activeOpacity={0.7} onPress={() => openPanel('profile')}>
+        <TouchableOpacity style={styles.headerLeft} activeOpacity={0.7} onPress={() => openPanel('profile')} accessibilityRole="button" accessibilityLabel="Open profile and stats">
           <View style={[styles.headerAvatar, { borderColor: theme.accent, backgroundColor: theme.card }]}>
             <Text style={[styles.headerAvatarText, { color: theme.accent }]}>{displayName.charAt(0).toUpperCase()}</Text>
           </View>
@@ -161,7 +161,7 @@ export default function DashboardScreen() {
             <Ionicons name="flame" size={16} color={theme.danger} style={{ marginRight: 4 }} />
             <Text style={[styles.streakPillText, { color: theme.danger }]}>{streak}</Text>
           </View>
-          <TouchableOpacity style={[styles.menuButton, { borderColor: theme.accent, backgroundColor: isDarkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.5)' }]} onPress={() => openPanel('menu')}>
+          <TouchableOpacity style={[styles.menuButton, { borderColor: theme.accent, backgroundColor: isDarkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.5)' }]} onPress={() => openPanel('menu')} accessibilityRole="button" accessibilityLabel="Open menu">
             <Ionicons name="menu" size={22} color={theme.accent} />
           </TouchableOpacity>
         </View>
@@ -175,6 +175,8 @@ export default function DashboardScreen() {
           isRoastMode={isRoastMode}
           accent={theme.accent}
           danger={theme.danger}
+          secondary={theme.secondary}
+          success={theme.success}
           cardColor={theme.card}
           textColor={theme.text}
           subTextColor={theme.subText}
@@ -214,9 +216,9 @@ export default function DashboardScreen() {
           
           <View style={styles.bountyProgressContainer}>
             <View style={[styles.bountyTrack, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
-              <View style={[styles.bountyFill, { width: `${bountyProgress * 100}%`, backgroundColor: isBountyComplete ? '#32CD32' : theme.accent }]} />
+              <View style={[styles.bountyFill, { width: `${bountyProgress * 100}%`, backgroundColor: isBountyComplete ? theme.success : theme.accent }]} />
             </View>
-            <Text style={[styles.bountyCount, { color: isBountyComplete ? '#32CD32' : theme.text }]}>
+            <Text style={[styles.bountyCount, { color: isBountyComplete ? theme.success : theme.text }]}>
               {isBountyComplete ? `${DAILY_BOUNTY_TARGET}/${DAILY_BOUNTY_TARGET} ✓` : `${bountyShown}/${DAILY_BOUNTY_TARGET}`}
             </Text>
           </View>

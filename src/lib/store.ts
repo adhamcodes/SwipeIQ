@@ -209,25 +209,70 @@ export const useStore = create<AppState>()(
   )
 );
 
-// THE CREAMY COLOR TRANSLATOR
+// ---------------------------------------------------------------------------
+// DESIGN TOKENS — the single source of truth for color across the whole app.
+// Every screen reads from here, so refining these values restyles everything.
+// ---------------------------------------------------------------------------
+
+// Turn a #RRGGBB hex into an rgba() string at the given alpha (for soft fills/glows).
+const hexToRgba = (hex: string, alpha: number) => {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 export const getThemeColors = (isDarkMode: boolean, accentHex: string) => {
+  // Neon accents are gorgeous on black but harsh on white — map them to richer,
+  // legible tones in light mode while keeping the same identity.
   let activeAccent = accentHex;
-  
   if (!isDarkMode) {
-    if (accentHex === '#00E5FF') activeAccent = '#0284C7'; // Neon Cyan -> Ocean Blue
-    if (accentHex === '#32CD32') activeAccent = '#059669'; // Neon Green -> Sage/Emerald
-    if (accentHex === '#FF0055') activeAccent = '#E11D48'; // Neon Pink -> Soft Rose
+    if (accentHex === '#00E5FF') activeAccent = '#0891B2'; // neon cyan -> deep cyan
+    if (accentHex === '#32CD32') activeAccent = '#059669'; // neon green -> emerald
+    if (accentHex === '#FF0055') activeAccent = '#E11D48'; // neon pink -> rose
+  }
+
+  if (isDarkMode) {
+    return {
+      bg: '#0A0A0F',
+      card: '#16161E',
+      surface: '#1F1F2B',            // elevated panels / inputs
+      text: '#FFFFFF',
+      subText: '#9AA0AE',            // brighter than old #888 for contrast/accessibility
+      border: '#262631',
+      accent: activeAccent,
+      accentBg: hexToRgba(activeAccent, 0.14),
+      secondary: '#7C5CFF',          // intentional violet (boss/special/level-up)
+      secondaryBg: hexToRgba('#7C5CFF', 0.16),
+      success: '#22E0A1',
+      successBg: hexToRgba('#22E0A1', 0.14),
+      warning: '#FFC53D',
+      danger: '#FF4D6D',
+      dangerBg: hexToRgba('#FF4D6D', 0.14),
+      invertText: '#0A0A0F',
+      shadow: '#000000',
+    };
   }
 
   return {
-    bg: isDarkMode ? '#0D0D12' : '#FDFBF7', 
-    card: isDarkMode ? '#16161E' : '#FFFFFF', 
-    text: isDarkMode ? '#FFF' : '#1E1E24', 
-    subText: isDarkMode ? '#888' : '#71717A', 
-    border: isDarkMode ? '#2A2A35' : '#E5E5E0',
-    danger: isDarkMode ? '#FF4500' : '#DC2626',
-    dangerBg: isDarkMode ? 'rgba(255, 69, 0, 0.1)' : 'rgba(220, 38, 38, 0.1)',
+    bg: '#F6F7FB',
+    card: '#FFFFFF',
+    surface: '#FFFFFF',
+    text: '#16161D',
+    subText: '#6B7280',
+    border: '#E6E8F0',
     accent: activeAccent,
-    invertText: isDarkMode ? '#0D0D12' : '#FFFFFF',
+    accentBg: hexToRgba(activeAccent, 0.10),
+    secondary: '#6D4EF0',
+    secondaryBg: hexToRgba('#6D4EF0', 0.10),
+    success: '#0F9D74',
+    successBg: hexToRgba('#0F9D74', 0.10),
+    warning: '#D97706',
+    danger: '#E11D48',
+    dangerBg: hexToRgba('#E11D48', 0.10),
+    invertText: '#FFFFFF',
+    shadow: '#9AA0B5',
   };
 };

@@ -3,7 +3,7 @@ import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, PanResponder, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Dimensions, PanResponder, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { applySM2, QUALITY_FAILURE, QUALITY_SUCCESS } from '../lib/sm2';
 import { xpForRepetition } from '../lib/deck-utils';
@@ -206,7 +206,9 @@ export default function ArenaScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
       <View style={styles.header}>
-        <Ionicons name="close" size={28} color={theme.text} onPress={() => router.replace('/')} />
+        <TouchableOpacity hitSlop={12} accessibilityRole="button" accessibilityLabel="Exit study session" onPress={() => router.replace('/')}>
+          <Ionicons name="close" size={28} color={theme.text} />
+        </TouchableOpacity>
         
         <View style={{ alignItems: 'center' }}>
           <Text style={[styles.progress, { color: theme.accent }]}>Card {currentIndex + 1} of {deck.cards.length}</Text>
