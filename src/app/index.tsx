@@ -21,6 +21,7 @@ export default function DashboardScreen() {
   } = useStore();
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [panelMode, setPanelMode] = useState<'menu' | 'profile'>('menu');
   const [displayName, setDisplayName] = useState('Scholar');
   const slideAnim = useRef(new Animated.Value(SCREEN_WIDTH)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -81,22 +82,30 @@ export default function DashboardScreen() {
     if (isHapticsEnabled) Haptics.impactAsync(style);
   };
 
-  const toggleMenu = () => {
-    triggerHaptic();
-    const willOpen = !isMenuOpen;
-    setIsMenuOpen(willOpen);
-
+  const animatePanel = (open: boolean) => {
     Animated.parallel([
-      Animated.timing(slideAnim, { toValue: willOpen ? 0 : SCREEN_WIDTH, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(overlayOpacity, { toValue: willOpen ? 1 : 0, duration: 350, useNativeDriver: true })
+      Animated.timing(slideAnim, { toValue: open ? 0 : SCREEN_WIDTH, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(overlayOpacity, { toValue: open ? 1 : 0, duration: 350, useNativeDriver: true })
     ]).start();
+  };
+
+  const openPanel = (mode: 'menu' | 'profile') => {
+    triggerHaptic();
+    setPanelMode(mode);
+    setIsMenuOpen(true);
+    animatePanel(true);
+  };
+
+  const closePanel = () => {
+    setIsMenuOpen(false);
+    animatePanel(false);
   };
 
   const handleWipeVault = () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy);
     Alert.alert("⚠️ DANGER ZONE", "Are you absolutely sure? This will delete all your decks and reset your XP.", [
         { text: "Cancel", style: "cancel" },
-        { text: "WIPE EVERYTHING", style: "destructive", onPress: () => { wipeVault(); triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy); toggleMenu(); }}
+        { text: "WIPE EVERYTHING", style: "destructive", onPress: () => { wipeVault(); triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy); closePanel(); }}
     ]);
   };
 
@@ -124,7 +133,7 @@ export default function DashboardScreen() {
       
       {/* HEADER */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
+        <TouchableOpacity style={styles.headerLeft} activeOpacity={0.7} onPress={() => openPanel('profile')}>
           <View style={[styles.headerAvatar, { borderColor: theme.accent, backgroundColor: theme.card }]}>
             <Text style={[styles.headerAvatarText, { color: theme.accent }]}>{displayName.charAt(0).toUpperCase()}</Text>
           </View>
@@ -132,13 +141,13 @@ export default function DashboardScreen() {
             <Text style={[styles.headerHi, { color: theme.subText }]}>Welcome back</Text>
             <Text style={[styles.headerName, { color: theme.text }]} numberOfLines={1}>{displayName}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
         <View style={styles.headerRight}>
           <View style={[styles.streakPill, { backgroundColor: theme.dangerBg, borderColor: theme.danger }]}>
             <Ionicons name="flame" size={16} color={theme.danger} style={{ marginRight: 4 }} />
             <Text style={[styles.streakPillText, { color: theme.danger }]}>{streak}</Text>
           </View>
-          <TouchableOpacity style={[styles.menuButton, { borderColor: theme.accent, backgroundColor: isDarkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.5)' }]} onPress={toggleMenu}>
+          <TouchableOpacity style={[styles.menuButton, { borderColor: theme.accent, backgroundColor: isDarkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.5)' }]} onPress={() => openPanel('menu')}>
             <Ionicons name="menu" size={22} color={theme.accent} />
           </TouchableOpacity>
         </View>
@@ -251,7 +260,7 @@ export default function DashboardScreen() {
 
       {/* COMMAND CENTER OVERLAY & SIDEBAR */}
       <Animated.View pointerEvents={isMenuOpen ? 'auto' : 'none'} style={[styles.overlayBackground, { opacity: overlayOpacity }]}>
-        <TouchableOpacity style={{ flex: 1 }} onPress={toggleMenu} activeOpacity={1} />
+        <TouchableOpacity style={{ flex: 1 }} onPress={closePanel} activeOpacity={1} />
       </Animated.View>
 
       <Animated.View style={[styles.slidingPanel, { backgroundColor: theme.panel, borderColor: theme.panelBorder, transform: [{ translateX: slideAnim }], shadowColor: theme.accent }]}>
@@ -259,12 +268,13 @@ export default function DashboardScreen() {
           <ScrollView contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 24 }} showsVerticalScrollIndicator={false}>
             
             <View style={styles.panelHeader}>
-              <Text style={[styles.panelTitle, { color: theme.accent }]}>⚡ SWIPEIQ</Text>
-              <TouchableOpacity onPress={toggleMenu} style={[styles.closeButton, { borderColor: theme.accent, backgroundColor: isDarkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.5)' }]}>
+              <Text style={[styles.panelTitle, { color: theme.accent }]}>{panelMode === 'profile' ? 'PROFILE' : '⚡ SWIPEIQ'}</Text>
+              <TouchableOpacity onPress={closePanel} style={[styles.closeButton, { borderColor: theme.accent, backgroundColor: isDarkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.5)' }]}>
                 <Ionicons name="close" size={24} color={theme.accent} />
               </TouchableOpacity>
             </View>
 
+            {panelMode === 'profile' && (<>
             <LinearGradient colors={[`${theme.accent}15`, 'rgba(0,0,0,0)']} style={[styles.idCard, { borderColor: theme.accent }]}>
               <View style={styles.idCardHeader}>
                 <Ionicons name="scan" size={20} color={theme.accent} />
@@ -303,7 +313,9 @@ export default function DashboardScreen() {
                 <Text style={[styles.hudValue, { color: theme.accent }]}>{masteryPercent}%</Text>
               </View>
             </View>
+            </>)}
 
+            {panelMode === 'menu' && (<>
             <Text style={[styles.panelSectionTitle, { color: theme.subText }]}>SYSTEM CONFIG</Text>
             <View style={[styles.settingsBlock, { backgroundColor: theme.hudBg, borderColor: theme.panelBorder }]}>
               <View style={styles.settingRow}>
@@ -377,6 +389,7 @@ export default function DashboardScreen() {
               <Ionicons name="log-out-outline" size={20} color={theme.subText} style={{ marginRight: 10 }} />
               <Text style={[styles.signOutText, { color: theme.subText }]}>Secure Disconnect</Text>
             </TouchableOpacity>
+            </>)}
 
           </ScrollView>
         </SafeAreaView>
