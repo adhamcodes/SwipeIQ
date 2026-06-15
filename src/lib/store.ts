@@ -23,6 +23,7 @@ export interface SyncableState {
   isHapticsEnabled: boolean;
   isAudioEnabled: boolean;
   isDarkMode: boolean;
+  isRemindersEnabled: boolean;
   dailySwipes: number;
   lastSwipeDate: string;
 }
@@ -32,6 +33,14 @@ export interface Deck {
   title: string;
   cards: Flashcard[];
   createdAt: number;
+}
+
+// A single card that is due for review, with enough info to write the result back.
+export interface DueCard {
+  deckId: string;
+  deckTitle: string;
+  cardIndex: number;
+  card: Flashcard;
 }
 
 interface AppState {
@@ -56,6 +65,7 @@ interface AppState {
   isHapticsEnabled: boolean;
   isAudioEnabled: boolean;
   isDarkMode: boolean;
+  isRemindersEnabled: boolean;
   setSetting: (key: keyof AppState, value: any) => void;
 
   // NEW: Dashboard Intelligence
@@ -63,6 +73,8 @@ interface AppState {
   lastSwipeDate: string;
   incrementDailySwipes: () => void;
   getPriorityDeck: () => Deck | undefined;
+  getDueCards: () => DueCard[];
+  getDueCount: () => number;
 }
 
 export const useStore = create<AppState>()(
@@ -92,6 +104,7 @@ export const useStore = create<AppState>()(
       isHapticsEnabled: true,
       isAudioEnabled: true,
       isDarkMode: true,
+      isRemindersEnabled: true,
       setSetting: (key, value) => set({ [key]: value }),
 
       // NEW: Dashboard Intelligence Implementation
@@ -110,14 +123,32 @@ export const useStore = create<AppState>()(
       getPriorityDeck: () => {
         const decks = get().savedDecks;
         if (decks.length === 0) return undefined;
-        
-        // Find the deck with the most unmastered cards (repetition === 0)
-        return decks.reduce((highestPriorityDeck, currentDeck) => {
-          const prevUnmastered = highestPriorityDeck.cards.filter(c => c.repetition === 0).length;
-          const currUnmastered = currentDeck.cards.filter(c => c.repetition === 0).length;
-          return (currUnmastered > prevUnmastered) ? currentDeck : highestPriorityDeck;
+
+        const now = Date.now();
+        const dueCount = (deck: Deck) =>
+          deck.cards.filter(c => c.nextReviewTimestamp == null || c.nextReviewTimestamp <= now).length;
+
+        // Prefer the deck with the most cards due right now; fall back to first deck.
+        return decks.reduce((best, current) =>
+          dueCount(current) > dueCount(best) ? current : best
+        );
+      },
+
+      // Flatten every card that is due for review across all decks.
+      getDueCards: () => {
+        const now = Date.now();
+        const due: DueCard[] = [];
+        get().savedDecks.forEach((deck) => {
+          deck.cards.forEach((card, cardIndex) => {
+            if (card.nextReviewTimestamp == null || card.nextReviewTimestamp <= now) {
+              due.push({ deckId: deck.id, deckTitle: deck.title, cardIndex, card });
+            }
+          });
         });
-      }
+        return due;
+      },
+
+      getDueCount: () => get().getDueCards().length,
     }),
     {
       name: 'swipe-iq-storage',
