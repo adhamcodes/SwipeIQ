@@ -7,6 +7,8 @@ import { Alert, Animated, Dimensions, Easing, SafeAreaView, ScrollView, StatusBa
 import { setRemindersEnabled } from '../lib/notifications';
 import { getThemeColors, useStore } from '../lib/store';
 import { getRankProgress } from '../lib/ranks';
+import { CoachMascot } from '../components/coach-mascot';
+import { getCachedCoachLines, pickLocalCoachLine, refreshCoachLines } from '../lib/coach';
 import { supabase } from '../lib/supabase';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -60,10 +62,22 @@ export default function DashboardScreen() {
   // RANK & XP MATH (unified with the summary screen's tier system)
   const { tier: rank, nextTarget, progress: xpProgress } = getRankProgress(xp);
 
-  // --- COACH TOAST LOGIC ---
-  const coachMessage = isRoastMode
-    ? (streak > 0 ? `A ${streak} day streak? Cute. My grandma learns faster than that. Get to work.` : `0 days. Pathetic. Are you even trying? Open a deck.`)
-    : (streak > 0 ? `You're on a ${streak} day streak! You're a machine! Let's conquer today!` : `Welcome back! Ready to build a new streak? Let's go!`);
+  // --- COACH LINES (local pool instantly; AI batch when the function is deployed) ---
+  const [coachMessage, setCoachMessage] = useState('');
+  useEffect(() => {
+    let cancelled = false;
+    const mode = isRoastMode ? 'ROAST' : 'HYPE';
+    setCoachMessage(pickLocalCoachLine(mode, streak));
+    (async () => {
+      let lines = await getCachedCoachLines(mode);
+      if (!lines) lines = await refreshCoachLines(mode);
+      if (!cancelled && lines && lines.length) {
+        setCoachMessage(lines[Math.floor(Math.random() * lines.length)]);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRoastMode, streak]);
 
   // --- THEME ENGINE ---
   const baseTheme = getThemeColors(isDarkMode, accentColor);
@@ -154,13 +168,17 @@ export default function DashboardScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.mainContent}>
         
-        {/* COACH TOAST BRIEFING */}
-        <View style={styles.coachSection}>
-          <Text style={[styles.coachTitle, { color: theme.subText }]}>COACH TOAST_</Text>
-          <Text style={[styles.coachMessage, { color: isRoastMode ? theme.danger : theme.text }]}>
-            "{coachMessage}"
-          </Text>
-        </View>
+        {/* COACH MASCOT */}
+        <CoachMascot
+          message={coachMessage}
+          isRoastMode={isRoastMode}
+          accent={theme.accent}
+          danger={theme.danger}
+          cardColor={theme.card}
+          textColor={theme.text}
+          subTextColor={theme.subText}
+          borderColor={theme.border}
+        />
 
         {/* DUE TODAY CTA */}
         {dueCount > 0 && (

@@ -3,9 +3,11 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Animated, Dimensions, Easing, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { generateFlashcards } from '../lib/gemini';
 import { getThemeColors, useStore } from '../lib/store';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function GeneratorScreen() {
   const router = useRouter();
@@ -35,6 +37,12 @@ export default function GeneratorScreen() {
   const spin = spinAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg']
+  });
+
+  // Horizontal RGB light sweep for the prompt box border.
+  const sweep = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-SCREEN_WIDTH, 0],
   });
 
   const triggerHaptic = (type: 'light' | 'heavy' | 'success') => {
@@ -96,13 +104,13 @@ export default function GeneratorScreen() {
 
           {/* THE ANIMATED RGB NEON INPUT */}
           <View style={[styles.rgbWrapper, { shadowColor: isDarkMode ? '#BD00FF' : theme.accent }]}>
-            {/* The Spinning Gradient Background */}
-            <Animated.View style={[styles.rgbAnimatedBackground, { transform: [{ rotate: spin }] }]}>
+            {/* The Sweeping RGB Light Background */}
+            <Animated.View style={[styles.rgbAnimatedBackground, { transform: [{ translateX: sweep }] }]}>
               <LinearGradient 
-                colors={isDarkMode ? ['#00E5FF', '#BD00FF', '#FF0055', '#00E5FF'] : [theme.accent, theme.bg, theme.accent, theme.bg]} 
+                colors={isDarkMode ? ['#00E5FF', '#BD00FF', '#FF0055', '#BD00FF', '#00E5FF'] : [theme.accent, theme.bg, theme.accent, theme.bg, theme.accent]} 
                 style={{ flex: 1 }} 
-                start={{ x: 0, y: 0 }} 
-                end={{ x: 1, y: 1 }} 
+                start={{ x: 0, y: 0.5 }} 
+                end={{ x: 1, y: 0.5 }} 
               />
             </Animated.View>
             
@@ -253,10 +261,10 @@ const styles = StyleSheet.create({
   },
   rgbAnimatedBackground: {
     position: 'absolute',
-    top: '-50%',
-    left: '-50%',
-    width: '200%',
-    height: '200%',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: SCREEN_WIDTH * 2,
   },
   innerInputBox: {
     flex: 1,
