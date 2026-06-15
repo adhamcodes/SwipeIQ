@@ -39,8 +39,10 @@ export async function generateFlashcards(topic: string) {
       throw new Error("Server didn't return a valid array of cards.");
     }
 
-    // Format the cards to match our local Zustand schema
-    const formattedCards = cardsArray.map((card: any) => ({
+    // Format the cards to match our local store schema (with a unique id each).
+    const now = Date.now();
+    const formattedCards = cardsArray.map((card: any, index: number) => ({
+      id: `${now}-${index}-${Math.random().toString(36).slice(2, 8)}`,
       question: card.question,
       answer: card.answer,
       repetition: 0,

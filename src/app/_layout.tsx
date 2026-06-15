@@ -1,12 +1,44 @@
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { pullStateFromCloud, startSync, stopSync } from '../lib/cloud-sync';
+import { useStore } from '../lib/store';
 import { supabase } from '../lib/supabase';
 
 export default function RootLayout() {
   const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
   const segments = useSegments();
+
+  // --- CLOUD SYNC LIFECYCLE (runs once) ---
+  useEffect(() => {
+    let active = true;
+
+    const handleSession = async (session: any) => {
+      if (session) {
+        // Signed in: load the cloud backup, then keep it in sync.
+        await pullStateFromCloud();
+        if (active) startSync();
+      } else {
+        // Signed out: stop syncing and clear this device's data (privacy).
+        stopSync();
+        useStore.getState().resetLocal();
+      }
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => handleSession(session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
+        handleSession(session);
+      }
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+      stopSync();
+    };
+  }, []);
 
   useEffect(() => {
     // 1. Check if they are already logged in when the app opens
