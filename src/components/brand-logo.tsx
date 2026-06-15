@@ -24,8 +24,8 @@ export function BrandLogo({ showWordmark = true, tagline }: { showWordmark?: boo
     <View style={styles.wrap}>
       <View style={styles.orbWrap}>
         <Animated.View style={[styles.orbGlow, { opacity, transform: [{ scale }] }]} />
-        <LinearGradient colors={['#00E5FF', '#0066FF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.orb}>
-          <Ionicons name="flash" size={36} color="#00121A" />
+        <LinearGradient colors={['#00E5FF', '#7C5CFF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.orb}>
+          <Ionicons name="flash" size={36} color="#FFFFFF" />
         </LinearGradient>
       </View>
       {showWordmark && <Text style={styles.title}>SWIPEIQ</Text>}
