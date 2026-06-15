@@ -9,7 +9,7 @@ import { useStore } from '../lib/store';
 export default function SummaryScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const personaMode = useStore(state => state.personaMode);
+  const isRoastMode = useStore(state => state.isRoastMode);
   
   const totalCards = Number(params.total) || 0;
   const rightSwipes = Number(params.right) || 0;
@@ -43,8 +43,8 @@ export default function SummaryScreen() {
   }, []);
 
   const tierColor = getTierColor(endTier);
-  const bossColor = personaMode === 'HYPE' ? '#f59e0b' : '#ef4444';
-  const bossTitle = personaMode === 'HYPE' ? 'BOSS DEFEATED!' : 'BARELY SURVIVED...';
+  const bossColor = isRoastMode ? '#ef4444' : '#f59e0b';
+  const bossTitle = isRoastMode ? 'BARELY SURVIVED...' : 'BOSS DEFEATED!';
 
   return (
     <SafeAreaView style={styles.container}>

@@ -11,6 +11,10 @@ const corsHeaders = {
 // The free, capable model. Swap to "gemini-2.5-flash-lite" for higher daily limits.
 const MODEL = "gemini-2.5-flash"
 const MAX_TOPIC_LENGTH = 120
+const ALLOWED_DIFFICULTIES = ["Beginner", "Intermediate", "Expert"]
+const MIN_CARDS = 1
+const MAX_CARDS = 50
+const DEFAULT_CARDS = 20
 
 // Small helper so every error reply looks the same and is easy to read.
 function jsonError(message: string, status: number) {
@@ -49,7 +53,8 @@ serve(async (req) => {
       return jsonError("Your session is invalid. Please sign in again.", 401)
     }
 
-    // 2. VALIDATE INPUT: make sure the topic is a sensible, non-huge string.
+    // 2. VALIDATE INPUT: make sure the topic is a sensible, non-huge string,
+    //    and read the requested card count + difficulty (with safe defaults).
     const body = await req.json().catch(() => null)
     const topic = typeof body?.topic === "string" ? body.topic.trim() : ""
 
@@ -60,6 +65,17 @@ serve(async (req) => {
       return jsonError(`Topic is too long (max ${MAX_TOPIC_LENGTH} characters).`, 400)
     }
 
+    // How many cards to make (clamped to a safe range).
+    let count = Number(body?.count)
+    if (!Number.isFinite(count)) count = DEFAULT_CARDS
+    count = Math.min(MAX_CARDS, Math.max(MIN_CARDS, Math.round(count)))
+
+    // Difficulty level (only allow known values).
+    const requestedDifficulty = typeof body?.difficulty === "string" ? body.difficulty : ""
+    const difficulty = ALLOWED_DIFFICULTIES.includes(requestedDifficulty)
+      ? requestedDifficulty
+      : "Intermediate"
+
     // 3. Make sure the server has its AI key.
     const apiKey = Deno.env.get("GEMINI_API_KEY")
     if (!apiKey) {
@@ -68,8 +84,8 @@ serve(async (req) => {
 
     // 4. Ask Gemini for strict JSON flashcards.
     const prompt =
-      `Create exactly 20 high-quality flashcards about "${topic}". ` +
-      `Return ONLY a JSON array of 20 objects. ` +
+      `Create exactly ${count} ${difficulty}-level flashcards about "${topic}". ` +
+      `Return ONLY a JSON array of ${count} objects. ` +
       `Each object must have exactly two string keys: "question" and "answer". ` +
       `Keep each question and answer concise and accurate. ` +
       `Do not include markdown, code fences, or any text outside the JSON array.`

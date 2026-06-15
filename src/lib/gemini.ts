@@ -1,11 +1,17 @@
 import { supabase } from './supabase';
 
-export async function generateFlashcards(topic: string) {
+interface GenerateOptions {
+  topic: string;
+  count?: number;
+  difficulty?: string;
+}
+
+export async function generateFlashcards({ topic, count = 20, difficulty = 'Intermediate' }: GenerateOptions) {
   try {
-    console.log(`[Frontend] Requesting flashcards for: ${topic}`);
-    
+    console.log(`[Frontend] Requesting ${count} ${difficulty} flashcards for: ${topic}`);
+
     const { data, error } = await supabase.functions.invoke('generate-cards', {
-      body: { topic }
+      body: { topic, count, difficulty }
     });
 
     // 1. THE ERROR UNMASKER
