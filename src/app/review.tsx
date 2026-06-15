@@ -219,7 +219,7 @@ export default function ReviewScreen() {
         <Ionicons name="close" size={28} color={theme.text} onPress={() => router.replace('/')} />
         <View style={{ alignItems: 'center' }}>
           <Text style={[styles.progress, { color: theme.accent }]}>Review {currentIndex + 1} of {queue.length}</Text>
-          <Text style={[styles.comboText, { color: comboCount > 2 ? '#BD00FF' : theme.subText }]}>
+          <Text style={[styles.comboText, { color: comboCount > 2 ? theme.accent : theme.subText }]}>
             {comboCount > 0 ? `${comboCount}x COMBO 🔥` : ' '}
           </Text>
         </View>

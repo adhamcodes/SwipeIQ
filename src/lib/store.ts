@@ -59,6 +59,9 @@ interface AppState {
   // Cloud sync helpers
   applyCloudState: (incoming: Partial<SyncableState>) => void;
   resetLocal: () => void;
+  // Onboarding (device-local, not synced)
+  hasOnboarded: boolean;
+  completeOnboarding: () => void;
   
   // Progression
   streak: number;
@@ -103,6 +106,10 @@ export const useStore = create<AppState>()(
 
       // Clear this device's data (used on sign-out so the next person can't see it).
       resetLocal: () => set({ savedDecks: [], xp: 0, streak: 0, lastStudyDate: '', dailySwipes: 0, bountyClaimedDate: '' }),
+
+      // Onboarding is per-device and survives sign-out.
+      hasOnboarded: false,
+      completeOnboarding: () => set({ hasOnboarded: true }),
 
       
       streak: 0,

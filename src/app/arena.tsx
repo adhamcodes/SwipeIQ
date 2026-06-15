@@ -209,7 +209,7 @@ export default function ArenaScreen() {
         
         <View style={{ alignItems: 'center' }}>
           <Text style={[styles.progress, { color: theme.accent }]}>Card {currentIndex + 1} of {deck.cards.length}</Text>
-          <Text style={[styles.comboText, { color: comboCount > 2 ? '#BD00FF' : theme.subText }]}>
+          <Text style={[styles.comboText, { color: comboCount > 2 ? theme.accent : theme.subText }]}>
             {comboCount > 0 ? `${comboCount}x COMBO 🔥` : ' '}
           </Text>
         </View>
