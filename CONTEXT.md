@@ -42,11 +42,14 @@ a **Roast mode**. Tagline: *Swipe. Learn. Level up.*
 - **App package id:** `com.adham.swipeiq`. Keys are *publishable* (public by design).
 
 ## 📍 CURRENT STATUS (update this as we go)
-- **v1.0 is code-complete** and was on branch `release/v1.0` (PR #3 → `main`).
-- **We are at: PHASE 0** of `ROADMAP.md` — merging PR #3 into `main`.
+- **v1.0 is MERGED into `main`** (PR #3, merged by Adham). `main` = the real, current app.
+- **We are at: PHASE 1** of `ROADMAP.md` — building the first shareable **APK**, then
+  adding crash reporting (**Sentry**) + over-the-air updates (**EAS Update**).
 - Backend is live (migrations run, `generate-cards` deployed, GEMINI_API_KEY set).
+- ⚠️ Dependabot opened PRs #4–#8 (dependency bumps). **Do NOT merge them yet** — they're
+  big version jumps that would break the build. We'll handle deps carefully in Phase 4.
 - Pending decision: **Gemini BYOK** strategy (Phase 4). Pending: security fix #3
-  (encrypt login token — do it WITH on-device login test).
+  (encrypt login token — do it WITH an on-device login test).
 
 ## 🗂️ KEY FILES
 - `ROADMAP.md` — the full 8-phase plan (our master checklist).
