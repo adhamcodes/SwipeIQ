@@ -1,0 +1,17 @@
+# Dependabot keeps an eye on your dependencies and opens PRs when one has a
+# known security vulnerability or a newer version. Activates once this is on
+# your default branch (after you merge the release PR). You should also turn on
+# "Dependabot alerts" in: GitHub repo -> Settings -> Code security.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
