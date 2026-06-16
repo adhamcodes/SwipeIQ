@@ -8,8 +8,10 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 }
 
-// The free, capable model. Swap to "gemini-2.5-flash-lite" for higher daily limits.
-const MODEL = "gemini-2.5-flash"
+// The free, capable model optimized for high throughput (best free-tier limits:
+// ~15 requests/min, ~1,000/day vs. ~10/min, ~250/day on regular flash). Quality
+// is more than enough for flashcards, and it lets far more users share the key.
+const MODEL = "gemini-2.5-flash-lite"
 const MAX_TOPIC_LENGTH = 120
 const ALLOWED_DIFFICULTIES = ["Beginner", "Intermediate", "Expert"]
 const MIN_CARDS = 1
@@ -132,7 +134,17 @@ serve(async (req) => {
 
     if (!geminiRes.ok) {
       console.error("Gemini API error:", JSON.stringify(data))
-      return jsonError(data?.error?.message || "The AI service rejected the request.", 502)
+      // RATE LIMIT / QUOTA: the shared AI key hit its free-tier limit. Show a
+      // calm, human message instead of leaking Google's raw billing/quota text
+      // (which mentions "check your plan and billing" — scary + unprofessional).
+      if (geminiRes.status === 429 || data?.error?.status === "RESOURCE_EXHAUSTED") {
+        return jsonError(
+          "Our AI is a little overwhelmed right now from all the studying! Please wait a few seconds and try again. 🌬️",
+          429,
+        )
+      }
+      // Any other AI-side problem: keep it generic (never expose internals).
+      return jsonError("The AI had a hiccup. Please try again in a moment.", 502)
     }
 
     // 5. SAFELY pull the text out (won't crash if the answer is empty/blocked).
