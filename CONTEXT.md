@@ -112,7 +112,17 @@ learn by swiping (right = know it, left = don't). Uses SM-2 spaced repetition, a
 4. Disabled experimental **React Compiler** (PR #11) as a precaution — turned out NOT to be the cause.
 5. Read **adb logcat** → REAL cause = **`@expo/ui`** beta package (`NoClassDefFoundError`).
 6. **FIX = removed `@expo/ui` + `expo-glass-effect`** (unused beta packages). ✅ DONE — APK launches!
-7. Now adding **Sentry** crash reporting before the friend beta. ← WE ARE HERE.
+7. Added **Sentry** crash reporting (PR #13) + **flash-lite / friendly AI errors** (PR #14).
+8. First Sentry build **FAILED** at gradle: the Sentry source-map UPLOAD step needs an auth token we
+   never set (`sentry.gradle line 149: Auth token is required`). App compiled fine — only the optional
+   upload failed. **FIX (PR `fix/sentry-build-disable-upload`):** set `SENTRY_DISABLE_AUTO_UPLOAD=true`
+   in `eas.json` (preview env) + removed placeholder org/project slugs from `app.json`. Crash reporting
+   still works; only "pretty" (un-minified) stack traces are deferred. ← WE ARE HERE.
+   > ⚠️ Two things to verify on the NEXT build: (a) `EXPO_PUBLIC_SENTRY_DSN` MUST be set as an EAS env
+   >   var for the `preview` environment (the failed build's log showed NONE set → Sentry would be
+   >   silent). Verify with `eas env:list --environment preview` BEFORE building. (b) To later get
+   >   readable stack traces, create a Sentry auth token, set it as an EAS secret `SENTRY_AUTH_TOKEN`,
+   >   re-add org/project slugs, and flip the disable flag off.
 
 ## 🗂️ KEY FILES
 - `ROADMAP.md` — the full 8-phase plan (master checklist).
