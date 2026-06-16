@@ -7,7 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 }
 
-const MODEL = "gemini-2.5-flash"
+// Match generate-cards: the high-throughput free model (best free-tier limits).
+const MODEL = "gemini-2.5-flash-lite"
 
 function jsonError(message: string, status: number) {
   return new Response(JSON.stringify({ error: message }), {
@@ -64,7 +65,11 @@ serve(async (req) => {
     const data = await geminiRes.json()
     if (!geminiRes.ok) {
       console.error("Gemini API error:", JSON.stringify(data))
-      return jsonError(data?.error?.message || "The AI service rejected the request.", 502)
+      // Same calm handling as generate-cards: never leak Google's raw billing/quota text.
+      if (geminiRes.status === 429 || data?.error?.status === "RESOURCE_EXHAUSTED") {
+        return jsonError("Coach is taking a quick breather. Try again in a moment. 🌬️", 429)
+      }
+      return jsonError("The AI had a hiccup. Please try again in a moment.", 502)
     }
 
     const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text
