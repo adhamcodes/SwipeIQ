@@ -94,8 +94,16 @@ learn by swiping (right = know it, left = don't). Uses SM-2 spaced repetition, a
 - ⚠️ Adham's `.env` has `EXPO_PUBLIC_GEMINI_API_KEY` — a Gemini key should **NOT** be public/client-side.
   After Sentry is in, clean this up (AI must only run server-side in the `generate-cards` function).
 - ⚠️ Dependabot PRs **#4–#8**: do **NOT** merge (huge version jumps that would break the build).
-- **Still pending:** finish Phase 1 (Sentry + EAS Update for instant OTA fixes), then friend beta
-  (`TESTING.md`), then the rest of `ROADMAP.md` (the "wine" polish pass, hard testing, publish, monetize, scale).
+- 🚰 **AI rate-limit discovery (Adham caught this!):** the shared free Gemini key hit its quota
+  (`generate_content_free_tier_requests`, model `gemini-2.5-flash`), showing a scary raw "check your
+  billing" error. Fix (PR `fix/ai-rate-limit-friendly`): (1) switched model to **`gemini-2.5-flash-lite`**
+  (~4× daily capacity: 1,000 RPD / 15 RPM vs 250 / 10), a **server-side** change → needs
+  `supabase functions deploy generate-cards`, NO app rebuild; (2) friendly "AI is catching its breath"
+  message on 429 instead of leaking Google's billing text; (3) client drops the "Server says:" prefix
+  (ships in the next app rebuild). **The real long-term fix is BYOK (below) — shared key won't scale.**
+- **Still pending:** finish Phase 1 (Sentry rebuild + EAS Update), then **prioritize Gemini BYOK**
+  (each user brings their own free key → infinite free scale; was Phase 4, pulled earlier due to the
+  rate-limit discovery), then friend beta (`TESTING.md`), then the rest of `ROADMAP.md`.
 
 ## 📋 DEBUGGING JOURNAL — the launch-crash saga (so you have full context)
 1. App ran fine in Expo Go but crashed on launch as a real APK.

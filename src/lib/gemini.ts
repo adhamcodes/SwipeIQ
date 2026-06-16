@@ -29,7 +29,9 @@ export async function generateFlashcards({ topic, count = 20, difficulty = 'Inte
          }
       }
       console.log("🚨 TRUE SERVER ERROR:", realError);
-      throw new Error(`Server says: ${realError}`);
+      // The server always returns human-friendly messages, so show it directly
+      // (no robotic "Server says:" prefix).
+      throw new Error(realError);
     }
 
     if (!data) {
