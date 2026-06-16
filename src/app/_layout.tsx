@@ -4,11 +4,31 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { Session } from '@supabase/supabase-js';
+import * as Sentry from '@sentry/react-native';
 import { pullStateFromCloud, startSync, stopSync } from '../lib/cloud-sync';
 import { useStore } from '../lib/store';
 import { supabase } from '../lib/supabase';
 
-export default function RootLayout() {
+// --- CRASH REPORTING (Sentry) ---
+// Our "smoke detector": when the app crashes on anyone's phone, Sentry quietly
+// sends us the exact error + device info so we can SEE and fix it.
+// The DSN is read from the environment (EXPO_PUBLIC_SENTRY_DSN). If it's not set,
+// we simply skip Sentry — the app runs exactly as before, with zero risk.
+const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
+
+if (sentryDsn) {
+  Sentry.init({
+    dsn: sentryDsn,
+    // Tells us which build a crash came from (beta testing vs. real release).
+    environment: __DEV__ ? 'development' : 'production',
+    // Sample a fraction of sessions for performance tracing (light for now).
+    tracesSampleRate: 0.2,
+    // Don't spam our dashboard with errors while we develop locally.
+    enabled: !__DEV__,
+  });
+}
+
+function RootLayout() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const isDarkMode = useStore((s) => s.isDarkMode);
@@ -94,3 +114,7 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+// Wrap the root component so Sentry can automatically capture render errors
+// and crashes from anywhere in the app. (Safe even if Sentry isn't initialized.)
+export default Sentry.wrap(RootLayout);
