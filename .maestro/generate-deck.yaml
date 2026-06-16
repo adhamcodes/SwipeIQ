@@ -1,0 +1,37 @@
+# Maestro end-to-end test — logs in, generates a deck, lands in the Arena.
+# Fill in real test credentials below (use a throwaway test account).
+#
+# Run it:  maestro test .maestro/generate-deck.yaml
+# (Requires a dev build / APK installed — NOT Expo Go.)
+appId: com.adham.swipeiq
+env:
+  EMAIL: "test@example.com"
+  PASSWORD: "ChangeMe123"
+---
+- launchApp
+- tapOn:
+    text: "Skip"
+    optional: true
+# Sign in (the two input fields are email then password, top to bottom)
+- tapOn:
+    index: 0
+    below: "Sign In"
+- inputText: "${EMAIL}"
+- tapOn:
+    index: 1
+    below: "Sign In"
+- inputText: "${PASSWORD}"
+- tapOn: "ENTER VAULT"
+# Go to the generator and make a deck
+- tapOn:
+    text: "Generate"
+    optional: true
+- assertVisible:
+    text: "e.g., Deep Learning, Quantum Physics..."
+    optional: true
+- tapOn: "e.g., Deep Learning, Quantum Physics..."
+- inputText: "Solar System basics"
+- tapOn: "INITIALIZE SEQUENCE"
+# We should reach the Arena (a card to swipe). Adjust the assertion if needed.
+- swipe:
+    direction: RIGHT

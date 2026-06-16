@@ -44,3 +44,7 @@ example
 # generated native folders
 /ios
 /android
+
+
+# keep the env template tracked (real .env stays ignored above)
+!.env.example

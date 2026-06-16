@@ -1,11 +1,17 @@
 import { supabase } from './supabase';
 
-export async function generateFlashcards(topic: string) {
+interface GenerateOptions {
+  topic: string;
+  count?: number;
+  difficulty?: string;
+}
+
+export async function generateFlashcards({ topic, count = 20, difficulty = 'Intermediate' }: GenerateOptions) {
   try {
-    console.log(`[Frontend] Requesting flashcards for: ${topic}`);
-    
+    console.log(`[Frontend] Requesting ${count} ${difficulty} flashcards for: ${topic}`);
+
     const { data, error } = await supabase.functions.invoke('generate-cards', {
-      body: { topic }
+      body: { topic, count, difficulty }
     });
 
     // 1. THE ERROR UNMASKER
@@ -39,8 +45,10 @@ export async function generateFlashcards(topic: string) {
       throw new Error("Server didn't return a valid array of cards.");
     }
 
-    // Format the cards to match our local Zustand schema
-    const formattedCards = cardsArray.map((card: any) => ({
+    // Format the cards to match our local store schema (with a unique id each).
+    const now = Date.now();
+    const formattedCards = cardsArray.map((card: any, index: number) => ({
+      id: `${now}-${index}-${Math.random().toString(36).slice(2, 8)}`,
       question: card.question,
       answer: card.answer,
       repetition: 0,

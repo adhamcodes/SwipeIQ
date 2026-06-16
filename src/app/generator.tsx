@@ -3,9 +3,12 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Animated, Dimensions, Easing, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { generateFlashcards } from '../lib/gemini';
 import { getThemeColors, useStore } from '../lib/store';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function GeneratorScreen() {
   const router = useRouter();
@@ -14,6 +17,7 @@ export default function GeneratorScreen() {
   const [cardCount, setCardCount] = useState(20);
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorText, setErrorText] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
   
   const { addDeck, isHapticsEnabled, isDarkMode, accentColor } = useStore();
   const theme = getThemeColors(isDarkMode, accentColor);
@@ -37,6 +41,12 @@ export default function GeneratorScreen() {
     outputRange: ['0deg', '360deg']
   });
 
+  // Horizontal RGB light sweep for the prompt box border.
+  const sweep = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-SCREEN_WIDTH, 0],
+  });
+
   const triggerHaptic = (type: 'light' | 'heavy' | 'success') => {
     if (!isHapticsEnabled) return;
     if (type === 'light') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -52,13 +62,13 @@ export default function GeneratorScreen() {
     setErrorText('');
     
     try {
-      const advancedPrompt = `Generate exactly ${cardCount} flashcards at an ${difficulty} difficulty level about: ${topic}`;
-      const cards = await generateFlashcards(advancedPrompt);
-      
+      const cards = await generateFlashcards({ topic, count: cardCount, difficulty });
+
       const newDeck = { id: Date.now().toString(), title: topic, cards, createdAt: Date.now() };
       addDeck(newDeck);
       triggerHaptic('success');
-      router.replace('/');
+      // Go straight into the Arena to swipe the freshly made deck.
+      router.replace({ pathname: '/arena', params: { deckId: newDeck.id } });
     } catch (error: any) {
       triggerHaptic('heavy');
       setErrorText(error.message || "Failed to connect to the AI network.");
@@ -94,29 +104,58 @@ export default function GeneratorScreen() {
             </Text>
           </View>
 
-          {/* THE ANIMATED RGB NEON INPUT */}
-          <View style={[styles.rgbWrapper, { shadowColor: isDarkMode ? '#BD00FF' : theme.accent }]}>
-            {/* The Spinning Gradient Background */}
-            <Animated.View style={[styles.rgbAnimatedBackground, { transform: [{ rotate: spin }] }]}>
+          {/* PREMIUM AI PROMPT INPUT */}
+          <View style={[styles.rgbWrapper, { shadowColor: theme.accent, shadowOpacity: isFocused ? 0.6 : 0.28 }]}>
+            {/* Animated brand-gradient border (cyan -> violet shimmer) */}
+            <Animated.View style={[styles.rgbAnimatedBackground, { transform: [{ translateX: sweep }] }]}>
               <LinearGradient 
-                colors={isDarkMode ? ['#00E5FF', '#BD00FF', '#FF0055', '#00E5FF'] : [theme.accent, theme.bg, theme.accent, theme.bg]} 
+                colors={[theme.accent, theme.secondary, theme.accent, theme.secondary, theme.accent]} 
                 style={{ flex: 1 }} 
-                start={{ x: 0, y: 0 }} 
-                end={{ x: 1, y: 1 }} 
+                start={{ x: 0, y: 0.5 }} 
+                end={{ x: 1, y: 0.5 }} 
               />
             </Animated.View>
             
-            {/* The Inner Dark Box */}
+            {/* Inner glass box */}
             <View style={[styles.innerInputBox, { backgroundColor: theme.card }]}>
-              <Text style={[styles.terminalLabel, { color: theme.accent }]}>{`> AI_PROMPT_INPUT`}</Text>
+              <View style={styles.promptHeaderRow}>
+                <View style={styles.promptLabelGroup}>
+                  <View style={[styles.aiChip, { backgroundColor: theme.accentBg }]}>
+                    <Ionicons name="sparkles" size={13} color={theme.accent} />
+                  </View>
+                  <Text style={[styles.promptLabel, { color: theme.subText }]}>WHAT DO YOU WANT TO MASTER?</Text>
+                </View>
+              </View>
+
               <TextInput
                 style={[styles.input, { color: theme.text }]}
                 placeholder="e.g., Deep Learning, Quantum Physics..."
                 placeholderTextColor={theme.subText}
                 value={topic}
                 onChangeText={setTopic}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                maxLength={120}
                 multiline
               />
+
+              <View style={styles.promptFooterRow}>
+                {topic.length > 0 ? (
+                  <TouchableOpacity
+                    onPress={() => { triggerHaptic('light'); setTopic(''); }}
+                    hitSlop={10}
+                    style={styles.clearBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear topic"
+                  >
+                    <Ionicons name="close-circle" size={16} color={theme.subText} />
+                    <Text style={[styles.clearText, { color: theme.subText }]}>Clear</Text>
+                  </TouchableOpacity>
+                ) : <View />}
+                <Text style={[styles.charCounter, { color: topic.length > 100 ? theme.danger : theme.subText }]}>
+                  {topic.length}/120
+                </Text>
+              </View>
             </View>
           </View>
 
@@ -229,7 +268,7 @@ export default function GeneratorScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10 },
+  header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 10 },
   backButton: { padding: 4, alignSelf: 'flex-start' },
   content: { padding: 24, paddingBottom: 40 },
   
@@ -253,16 +292,24 @@ const styles = StyleSheet.create({
   },
   rgbAnimatedBackground: {
     position: 'absolute',
-    top: '-50%',
-    left: '-50%',
-    width: '200%',
-    height: '200%',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: SCREEN_WIDTH * 2,
   },
   innerInputBox: {
     flex: 1,
     borderRadius: 18,
-    padding: 20,
+    padding: 18,
   },
+  promptHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  promptLabelGroup: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  aiChip: { width: 26, height: 26, borderRadius: 9, alignItems: 'center', justifyContent: 'center', marginRight: 9 },
+  promptLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 1.2 },
+  promptFooterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 14 },
+  clearBtn: { flexDirection: 'row', alignItems: 'center' },
+  clearText: { fontSize: 12, fontWeight: '700', marginLeft: 4 },
+  charCounter: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
   terminalLabel: {
     fontSize: 12,
     fontWeight: '900',
@@ -270,9 +317,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   input: { 
-    fontSize: 20, 
+    fontSize: 19, 
     fontWeight: '600', 
-    lineHeight: 28, 
+    lineHeight: 27, 
+    minHeight: 40,
     textAlignVertical: 'top' 
   },
 

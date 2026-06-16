@@ -1,0 +1,21 @@
+# Maestro smoke test — automatically launches the app, clicks through onboarding,
+# and verifies the login screen appears. No account needed.
+#
+# Run it:  maestro test .maestro/smoke.yaml
+# (Requires a dev build / APK installed — NOT Expo Go. See TESTING-AUTOMATION.md)
+appId: com.adham.swipeiq
+---
+- clearState            # wipe app data so onboarding shows (fresh-install simulation)
+- launchApp
+- assertVisible: "SwipeIQ"
+# Onboarding (first launch only) — skip it if present
+- tapOn:
+    text: "Skip"
+    optional: true
+# We should now be on the login screen
+- assertVisible: "ENTER VAULT"
+# Toggle the Sign In / Create Account segments (basic UI sanity)
+- tapOn: "Create Account"
+- assertVisible: "CREATE ACCOUNT"
+- tapOn: "Sign In"
+- assertVisible: "ENTER VAULT"
