@@ -123,6 +123,12 @@ learn by swiping (right = know it, left = don't). Uses SM-2 spaced repetition, a
    >   silent). Verify with `eas env:list --environment preview` BEFORE building. (b) To later get
    >   readable stack traces, create a Sentry auth token, set it as an EAS secret `SENTRY_AUTH_TOKEN`,
    >   re-add org/project slugs, and flip the disable flag off.
+9. **Pre-Beta-1 total audit DONE** (code, security, Supabase RLS, Sentry, config). Verdict: app is
+   STABLE — no crashes/security holes; RLS solid; Boss Arena multi-card bug confirmed fixed; Gemini key
+   is server-only. Only fix applied: `generate-coach` model → flash-lite + calm 429 (PR
+   `fix/coach-flash-lite`, server-side → `supabase functions deploy generate-coach`). ← WE ARE HERE
+   (about to build Beta 1). Deferred to post-Beta-1: microcopy warm-up (with Adham's taste), Sentry
+   source maps (needs token), delete unused EXPO_PUBLIC_GEMINI_API_KEY from local .env, EAS Update OTA.
 
 ## 🗂️ KEY FILES
 - `ROADMAP.md` — the full 8-phase plan (master checklist).
