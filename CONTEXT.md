@@ -13,26 +13,30 @@ Open a new Kiro session, select the `adhamcodes/SwipeIQ` repo, and paste this:
 
 ---
 
-## 🚨 IMMEDIATE NEXT STEP (do this FIRST — we're mid-fix)
-We are in **Phase 1**, fixing a **launch crash**. The exact cause is **CONFIRMED via adb logcat**:
-the real (APK) build crashed on launch because of the **`@expo/ui`** beta package
-(`java.lang.NoClassDefFoundError ... expo.modules.ui.ExpoUIModule.definition`). It's unused leftover
-from the starter template, and its version is incompatible with Expo SDK 54.
+## 🚨 IMMEDIATE NEXT STEP (do this FIRST)
+🎉 **THE LAUNCH CRASH IS FIXED.** Removing `@expo/ui` + `expo-glass-effect` worked — the APK now
+launches all the way to onboarding on a real phone. v1.0 is alive!
 
-**THE FIX (guide Adham click-by-click):**
-1. Merge **PR #11** (it disables experimental React Compiler + carries this CONTEXT update).
-2. On his computer: `git checkout main` then `git pull`.
-3. Remove the broken unused beta packages:
-   `npm uninstall @expo/ui expo-glass-effect`
-4. Commit + push:
-   `git add package.json package-lock.json`
-   `git commit -m "Remove unused beta @expo/ui + expo-glass-effect (fixes launch crash)"`
-   `git push`
-5. Rebuild: `eas build --platform android --profile preview` (emulator prompt → type `n`).
-6. Install the new APK → open → it should launch to the **onboarding** screen. 🎉
-> If a DIFFERENT `NoClassDefFoundError` for another expo module appears next, remove that
-> beta/unused package the same way and rebuild. (Adham has adb/platform-tools set up to read crash logs:
-> `cd "C:\Users\User\OneDrive\Desktop\platform-tools"` then `.\adb -s <device> logcat -b crash -d`.)
+We are finishing **Phase 1**: adding **Sentry crash reporting** (our "smoke detector") BEFORE the
+friend beta, so we SEE every crash testers cause instead of being blind. The code is done in a PR
+(`feature/sentry-crash-reporting`): Sentry is initialized + wraps the app in `src/app/_layout.tsx`,
+the `@sentry/react-native/expo` config plugin is added to `app.json`, and `EXPO_PUBLIC_SENTRY_DSN`
+is documented in `.env.example`. Sentry only turns on if a DSN is present — so the app is safe even
+without one.
+
+**TO FINISH (guide Adham click-by-click):**
+1. On his computer: `npx expo install @sentry/react-native` (adds the package + updates the lock file).
+2. Create a free Sentry account at sentry.io → new project, platform **React Native**.
+3. Copy the **DSN** (Settings > Projects > [project] > Client Keys (DSN)) → put it in `.env` as
+   `EXPO_PUBLIC_SENTRY_DSN=...`.
+4. In `app.json`, replace `YOUR_SENTRY_ORG_SLUG` / `YOUR_SENTRY_PROJECT_SLUG` with his real slugs
+   (needed only for readable stack traces / source-map upload — optional for now).
+5. Merge the `feature/sentry-crash-reporting` PR into `main`, then `git pull`.
+6. Rebuild: `eas build -p android --profile preview` → install → trigger a test error → confirm it
+   shows up on the Sentry dashboard.
+7. THEN share the APK for the friend hard-test beta (see `TESTING.md` Mission 12 + the share message).
+
+> ⚡ Phase 1 also wants **EAS Update** (instant OTA fixes) — do that right after Sentry is confirmed.
 
 ---
 
@@ -82,14 +86,16 @@ learn by swiping (right = know it, left = don't). Uses SM-2 spaced repetition, a
 - Build: `eas build -p android --profile preview` → installable APK. Adham builds on his Expo account.
 
 ## 📍 CURRENT STATUS
-- **v1.0 is merged to `main`.** We're in **Phase 1**: getting the first shareable APK to launch.
-- APK **builds fine**; it was **crashing on launch** → cause found = `@expo/ui` (see IMMEDIATE NEXT STEP).
+- **v1.0 is merged to `main`.** We're finishing **Phase 1**.
+- ✅ **Launch crash FIXED** — APK launches to onboarding on a real phone (removed `@expo/ui` +
+  `expo-glass-effect`, commit `6b008d8`).
+- 🧯 **Sentry crash reporting**: code done in PR `feature/sentry-crash-reporting`; Adham needs to
+  `expo install` the package, create a Sentry project, set the DSN, merge, and rebuild (see IMMEDIATE NEXT STEP).
 - ⚠️ Adham's `.env` has `EXPO_PUBLIC_GEMINI_API_KEY` — a Gemini key should **NOT** be public/client-side.
-  After the app launches, clean this up (AI must only run server-side in the `generate-cards` function).
+  After Sentry is in, clean this up (AI must only run server-side in the `generate-cards` function).
 - ⚠️ Dependabot PRs **#4–#8**: do **NOT** merge (huge version jumps that would break the build).
-- **PR #11**: disables React Compiler + this CONTEXT update — safe to merge.
-- **Still pending:** Phase 1b (Sentry crash reporting + EAS Update for instant OTA fixes), then the rest
-  of `ROADMAP.md` (the "wine" polish pass, hard testing, friend beta, publish, monetize, scale).
+- **Still pending:** finish Phase 1 (Sentry + EAS Update for instant OTA fixes), then friend beta
+  (`TESTING.md`), then the rest of `ROADMAP.md` (the "wine" polish pass, hard testing, publish, monetize, scale).
 
 ## 📋 DEBUGGING JOURNAL — the launch-crash saga (so you have full context)
 1. App ran fine in Expo Go but crashed on launch as a real APK.
@@ -97,7 +103,8 @@ learn by swiping (right = know it, left = don't). Uses SM-2 spaced repetition, a
 3. `babel.config.js` needed `babel-preset-expo` → installed it → the build then succeeded.
 4. Disabled experimental **React Compiler** (PR #11) as a precaution — turned out NOT to be the cause.
 5. Read **adb logcat** → REAL cause = **`@expo/ui`** beta package (`NoClassDefFoundError`).
-6. **FIX = remove `@expo/ui` + `expo-glass-effect`** (unused beta packages). ← WE ARE HERE.
+6. **FIX = removed `@expo/ui` + `expo-glass-effect`** (unused beta packages). ✅ DONE — APK launches!
+7. Now adding **Sentry** crash reporting before the friend beta. ← WE ARE HERE.
 
 ## 🗂️ KEY FILES
 - `ROADMAP.md` — the full 8-phase plan (master checklist).

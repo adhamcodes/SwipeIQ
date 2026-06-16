@@ -11,11 +11,11 @@ We go top to bottom. Don't jump ahead — each phase sets up the next.
 > After this, `main` = your real, current app. Nothing is lost, ever.
 
 ## 🛡️ PHASE 1 — Make it real & crash-proof (answers "how do friends test it?")
-- [ ] 📱 Set up EAS: `npm i -g eas-cli` then `eas login`.
-- [ ] 🧯 Add **Sentry** crash reporting (so we SEE every crash).
+- [x] 📱 Set up EAS: `npm i -g eas-cli` then `eas login`.
+- [~] 🧯 Add **Sentry** crash reporting (so we SEE every crash). ← in progress (PR `feature/sentry-crash-reporting`)
 - [ ] ⚡ Add **EAS Update** (push fixes in minutes, no store re-review).
-- [ ] 📱 Build a **preview APK**: `eas build -p android --profile preview`.
-- [ ] 📱 Install the APK on your phone → confirm the real app + icon work.
+- [x] 📱 Build a **preview APK**: `eas build -p android --profile preview`.
+- [x] 📱 Install the APK on your phone → confirm the real app + icon work. 🎉 (launch crash fixed!)
 > Now you have a real, shareable app with a safety net.
 
 ## 🍷 PHASE 2 — The "fine like wine" polish pass (warm-futuristic)
